@@ -1108,10 +1108,8 @@ Data persistence, graph updates, exports, offline operation and keyboard operati
 | # | Issue | Effect | Preferred fix |
 | --- | --- | --- | --- |
 | 1 | **Backward navigation does not rewind the engine.** ◀ changes the selected day, but records after that day are still processed. | The displayed status can reflect later events (e.g. AST-C at day 60 shows Clinical Review instead of Monitor). | Make the engine ignore records after the selected mission day. Until then, do not present ◀ as historical replay. |
-| 2 | **No CSV template download button.** The template generator exists in code but is not linked in the interface. | Users must build the CSV header from Section 4.4. | Restore a "CSV template" button in test-entry step 2. |
-| 3 | **Simple CSV parsing.** Fields are split on commas without quote handling. | Notes or values containing commas break a row. | Use an RFC 4180-compliant parser. |
-| 4 | **Time in each state is not displayed in the benchmark table.** It is computed by the simulator. | The specification's "time spent in each monitoring state" metric is not visible. | Add the column or a chart. |
-| 5 | **No service worker.** | Offline reload of the hosted version depends on the browser cache. | Add a service worker and web app manifest. |
+| 2 | **Time in each state is not displayed in the benchmark table.** It is computed by the simulator. | The specification's "time spent in each monitoring state" metric is not visible. | Add the column or a chart. |
+| 3 | **No service worker.** | Offline reload of the hosted version depends on the browser cache. | Add a service worker and web app manifest. |
 
 ---
 
@@ -1119,11 +1117,12 @@ Data persistence, graph updates, exports, offline operation and keyboard operati
 
 **Software (Future development)**
 - Make the decision engine respect the selected historical day (known issue 1).
-- Restore the CSV template download, add robust CSV parsing and show time-in-state in the benchmark (known issues 2–4).
-- Add a service worker for full offline reloads (known issue 5).
+- Add a service worker for full offline reloads (known issue 3).
 - Real authentication and role-based access, and encrypted storage suitable for health data.
 - Study whether the confirmation rule and routine interval can reduce missed transient changes (scenario B) and cumulative false alerts without excessive cartridge use. Examine how confirmed neutral enrichment should affect testing frequency.
 - Fuller research-data preparation: OSDR-ready file formats, richer provenance and study metadata.
+- With greater vaginal microbiome data, it may be possible to suggest courses of treatment to the Crew Medical Officer. However, because of the current lack of data in this field, this is not possible.
+- BIOME could be implemented as is in its first phase, then after enough data is gathered through phase one, BIOME could be updated to make medical suggestions, a BIOME v2.
 
 **Science and validation (Future development)**
 - Analytical validation of a real assay panel, including *Megasphaera* phylotype resolution and a validated *Candida* assay (Section 10.2).
@@ -1132,8 +1131,7 @@ Data persistence, graph updates, exports, offline operation and keyboard operati
 
 **Hardware (Proposed)**
 - Development and testing of the swab, sample-preparation and compact qPCR cartridge workflow for microgravity: collection, containment, liquid handling, reagent storage, waste, reliability and crew workload.
-
-No completion dates are given. Not every proposed item will necessarily be implemented.
+- Hardware, implemented fully, would work together directly with our proposed software. As a proof of concept, data has to be entered manually to BIOME. Ideally, BIOME would have a physical counterpart that would allow data to be inputted into the system without need for human interference, increasing efficiency and ease of use greatly.
 
 ---
 

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>BIOME — Baseline-Individualized Onboard Microbiome Evaluation</title>
+<title>Adaptive Vaginal Health Monitor (BIOME) — Baseline-Individualized Onboard Microbiome Evaluation</title>
 <meta name="description" content="BIOME: offline-capable individualized longitudinal vaginal microbiome monitoring and explainable decision support for female astronauts. NASA Space Apps Challenge 2026 research prototype.">
 <style>
 :root{
@@ -24,6 +24,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .brand{display:flex;gap:10px;align-items:center;margin:2px 6px 4px}
 .brand svg{flex:none}
 .brand h1{font-size:20px;letter-spacing:.24em;margin:0;font-weight:800}
+.fullname{margin:2px 6px 0;font-size:12.5px;font-weight:700;color:var(--accent);letter-spacing:.01em}
 .brandsub{display:block;color:var(--muted);font-size:10.5px;letter-spacing:.02em;line-height:1.3;margin:6px 6px 16px}
 #nav button.nav{display:flex;width:100%;align-items:center;gap:10px;text-align:left;background:none;border:0;padding:8px 10px;border-radius:8px;color:var(--muted);cursor:pointer;font-size:13.5px}
 #nav button.nav:hover{background:#ffffff08;color:var(--text)}
@@ -42,7 +43,8 @@ main{min-width:0}
 .seg{display:inline-flex;border:1px solid var(--line2);border-radius:10px;overflow:hidden}
 .seg button{background:none;border:0;padding:6px 12px;cursor:pointer;color:var(--muted);font-size:12.5px}
 .seg button.on{background:var(--accent);color:#04201d;font-weight:700}
-.simpill{margin-left:auto;font-size:11px;letter-spacing:.08em;text-transform:uppercase;border:1px dashed var(--watch);color:var(--watch);padding:4px 10px;border-radius:999px}
+.topname{margin-left:auto;font-weight:700;font-size:13px;color:var(--muted)}
+.simpill{font-size:11px;letter-spacing:.08em;text-transform:uppercase;border:1px dashed var(--watch);color:var(--watch);padding:4px 10px;border-radius:999px}
 #urgent{display:none}
 #urgent.show{display:flex;gap:14px;align-items:center;background:repeating-linear-gradient(135deg,#3a0b0f,#3a0b0f 14px,#4a0d12 14px,#4a0d12 28px);border-bottom:2px solid var(--urgent);padding:12px 22px}
 #urgent strong{color:#fff;font-size:15px}
@@ -152,11 +154,15 @@ details>summary{cursor:pointer;color:var(--accent2);font-size:12.5px;margin-top:
 pre.report{white-space:pre-wrap;font-family:var(--mono);font-size:12px;background:#0a1121;border:1px solid var(--line);border-radius:10px;padding:14px;max-height:480px;overflow:auto}
 .hero{display:grid;grid-template-columns:1.2fr 1fr;gap:16px}
 .sr{position:absolute;left:-9999px}
+.vh{position:absolute !important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+th.rowh{font-weight:600;color:var(--text);text-transform:none;letter-spacing:0;font-size:12.5px;background:transparent;position:static}
+.symgrid.urinary{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line2)}
+.rejectbox{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
 @media (max-width:1100px){.g4{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(2,minmax(0,1fr))}.hero{grid-template-columns:1fr}}
 @media (max-width:900px){
   #app{grid-template-columns:1fr}
   #nav{position:static;height:auto;display:flex;flex-wrap:nowrap;overflow-x:auto;gap:4px;padding:10px;border-right:0;border-bottom:1px solid var(--line)}
-  #nav .navgrp,.brandsub,.selftest-pill{display:none}
+  #nav .navgrp,.brandsub,.fullname,.selftest-pill{display:none}
   #nav button.nav{width:auto;white-space:nowrap}
   .brand{margin-right:10px}
   .g2,.g3,.g4{grid-template-columns:1fr}.span2,.span3{grid-column:auto}
@@ -335,7 +341,8 @@ const QC_SHORT = { valid: 'Valid', blq: 'Detected <LOQ', nd: 'Not detected', qcf
 const QC_LABEL = { valid: 'Valid quantitative result', blq: 'Detected, below quantification limit', nd: 'Not detected', qcfail: 'QC failure', missing: 'Missing' };
 const SYMPTOMS = [['discharge', 'Unusual discharge'], ['odor', 'Unusual odor'], ['itch', 'Itching or irritation'], ['burn', 'Burning or pain']];
 const SEV = ['None', 'Mild', 'Moderate', 'Severe'];
-const RED_FLAGS = [['pelvic', 'Severe or sudden pelvic pain'], ['fever', 'Fever accompanied by pelvic pain'], ['bleed', 'Heavy bleeding with concerning systemic symptoms'], ['other', 'Other red flag defined by the mission medical protocol']];
+const URINARY = ['urinary', 'Pain, urgency or frequency when passing urine'];
+const RED_FLAGS = [['pelvic', 'Severe or sudden pelvic pain'], ['fever', 'Fever accompanied by pelvic pain'], ['bleed', 'Heavy bleeding with concerning systemic symptoms'], ['flank', 'Fever with flank or back pain'], ['retention', 'Unable to empty bladder together with urinary symptoms'], ['other', 'Other red flag defined by the mission medical protocol']];
 const CYCLE_TAGS = ['Not recorded', 'Menstrual', 'Follicular', 'Ovulatory', 'Luteal', 'Suppressed (continuous regimen)', 'Irregular / unknown', 'Not applicable'];
 
 const STATES = {
@@ -366,6 +373,7 @@ const PATTERNS = {
   stable: { label: 'Stable pattern', interp: 'No concerning changes detected', resp: 'Routine surveillance' },
   bvinc: { label: 'BV-associated increase', interp: 'One or more BV-associated targets rise beyond individual limits', resp: 'Repeat test and assess context' },
   bvlike: { label: 'Provisional BV-like microbial pattern — not a diagnosis', interp: 'Multiple BV-associated targets rise while protective-associated Lactobacillus falls', resp: 'Confirm and increase monitoring' },
+  candidaonly: { label: 'Candida increase alone', interp: 'Candida increases without supporting symptoms or bacterial changes', resp: 'Record and contextualize' },
   lactoenrich: { label: 'Lactobacillus enrichment (neutral pattern)', interp: 'Lactobacillus increases without corresponding BV-associated increases', resp: 'Neutral pattern; monitor' },
   loadshift: { label: 'Total-load shift', interp: 'Total bacterial load changes without a coherent BV-associated pattern', resp: 'Repeat or monitor' },
   mixed: { label: 'Mixed or unclear change', interp: 'Several targets change without a coherent pattern', resp: 'Repeat and review if persistent' },
@@ -392,6 +400,7 @@ const ASSAYS = {
 const DEFAULT_CONFIG = {
   baselineMin: 6, alpha: 0.05, adaptationDays: 28, adaptationInterval: 7, routineInterval: 14, watchRepeat: 2, monitorInterval: 3, invalidRepeat: 1,
   bvMinElevated: 2, protMinReduced: 1, cqTol: 0.3, iacPolicy: 'reject', symEscSeverity: 2, symEscDays: 3, highVarSd: 0.6,
+  provisionalMult: 1.5, symLinkDays: 1, bvConfirmTests: 2, detFracCut: 0.5,
   cartridges: 180, reserveWarn: 25, benchRuns: 100, benchSeed: 2026, missionLength: 120, invalidProb: 0.03,
 };
 const CONFIG_META = {
@@ -410,6 +419,10 @@ const CONFIG_META = {
   symEscSeverity: ['Triage: symptom severity prompting Clinical Review (0–3)', 'Prototype assumption', 'ev-assume', 'Placeholder for mission-approved triage policy'],
   symEscDays: ['Triage: consecutive symptomatic days prompting Clinical Review', 'Prototype assumption', 'ev-assume', 'Placeholder for mission-approved triage policy'],
   highVarSd: ['Baseline high-variability warning (SD, log10)', 'Prototype assumption', 'ev-assume', 'Display warning only'],
+  provisionalMult: ['Small-sample flag: baseline marked provisional while n < minimum × this multiplier', 'Prototype assumption', 'ev-assume', 'Display/uncertainty label only; no validated threshold'],
+  symLinkDays: ['Window (days) linking reported symptoms to a molecular test', 'Prototype assumption', 'ev-assume', 'Operational choice; used by R5 and R7'],
+  bvConfirmTests: ['Consecutive valid BV-like tests before the non-urgent medical-review flag', 'Provisional engineering heuristic', 'ev-assume', 'Operational confirmation (R4); not a clinical definition'],
+  detFracCut: ['Baseline detection fraction separating "usually detected" from "usually not detected"', 'Prototype assumption', 'ev-assume', 'Used only for qualitative transition labels'],
   cartridges: ['Cartridges available for the mission', 'Simulation configuration', 'ev-sim', 'Hypothetical inventory'],
   reserveWarn: ['Cartridge reserve warning level', 'Simulation configuration', 'ev-sim', 'Hypothetical'],
   benchRuns: ['Benchmark run count (missions per configuration)', 'Simulation configuration', 'ev-sim', 'Demonstration setting, not a sample-size recommendation'],
@@ -436,10 +449,14 @@ function qcTest(test, cfg) {
   if (test.iac === 'inhibited') { if (cfg.iacPolicy === 'flag') warnings.push('Internal amplification control indicates inhibition — flagged per configured assay policy.'); else { valid = false; reasons.push('Internal amplification control indicates PCR inhibition — rejected per assay validation policy.'); } }
   const targets = {};
   TARGETS.forEach(t => {
-    const e = (test.targets || {})[t.key] || {}; const cv = lot && lot.curves[t.key];
+    const e = (test.targets || {})[t.key] || {}; const ov = test.curve && test.curve[t.key];
+    let cv = lot && lot.curves[t.key]; let badCurve = false;
+    if (cv && ov && (num(ov.m) != null || num(ov.b) != null)) { const m = num(ov.m), b = num(ov.b); if (m == null || b == null || !(m < 0)) badCurve = true; else cv = { ...cv, m, b, runSpecific: m !== cv.m || b !== cv.b }; }
     const cq = num(e.cq), xin = num(e.log10); const o = { status: 'missing', x: null, cq, xin, xcq: null, note: '' };
     if (cv) { o.lod = cv.lod; o.loq = cv.loq; o.uloq = cv.uloq; }
     if (!valid) { o.status = 'qcfail'; o.note = 'Run/sample QC failure'; targets[t.key] = o; return; }
+    if (badCurve) { o.note = 'Invalid run standard curve (slope m must be negative and b present) — calibrated abundance not calculated'; targets[t.key] = o; return; }
+    if (cv) { o.m = cv.m; o.b = cv.b; o.runCurve = !!cv.runSpecific; }
     const st = e.status || (cq != null || xin != null ? 'detected' : 'missing');
     if (st === 'missing') { o.note = 'Target not run'; }
     else if (st === 'nd') { o.status = 'nd'; o.note = 'Below detection limit — recorded as not detected, not zero'; }
@@ -472,7 +489,7 @@ function computeBaseline(astro, cfg) {
     const xs = validRuns.filter(o => o.q.targets[t.key].status === 'valid').map(o => o.q.targets[t.key].x);
     const det = validRuns.filter(o => ['valid', 'blq'].includes(o.q.targets[t.key].status)).length;
     const st = xs.length ? meanSd(xs) : { n: 0, mean: null, sd: null };
-    const b = { ...st, min: xs.length ? Math.min(...xs) : null, max: xs.length ? Math.max(...xs) : null, detFrac: validRuns.length ? det / validRuns.length : 0, sufficient: st.n >= cfg.baselineMin && st.sd > 0, provisional: st.n < cfg.baselineMin * 1.5, highVar: st.sd > cfg.highVarSd };
+    const b = { ...st, min: xs.length ? Math.min(...xs) : null, max: xs.length ? Math.max(...xs) : null, detFrac: validRuns.length ? det / validRuns.length : 0, sufficient: st.n >= cfg.baselineMin && st.sd > 0, provisional: st.n < cfg.baselineMin * (cfg.provisionalMult ?? 1.5), highVar: st.sd > cfg.highVarSd };
     targets[t.key] = b;
     if (b.highVar) warnings.push(`${t.name}: highly variable baseline (SD ${fmt(st.sd)} log10) — review.`);
   });
@@ -482,7 +499,8 @@ function computeBaseline(astro, cfg) {
   const nSuff = TARGETS.filter(t => targets[t.key].sufficient).length;
   if (nSuff === 0) warnings.push(`No target has ≥ ${cfg.baselineMin} valid quantifiable observations yet.`);
   const assays = uniq(validRuns.map(o => o.t.assay));
-  return { targets, assays, nSamples: tests.length, nValidRuns: validRuns.length, warnings, nSufficient: nSuff, computedAt: new Date().toISOString(), cfgMin: cfg.baselineMin };
+  const samples = qcs.map(({ t, q }) => { const ck = (astro.checkins || []).filter(c => c.day === t.day).slice(-1)[0]; return { id: t.id, day: t.day, valid: q.valid, assay: t.assay, lot: t.lot, cycle: t.cycle || (ck && ck.cycle) || 'Not recorded', meds: t.meds || (ck && ck.meds) || '', ph: ck ? ck.ph : null }; });
+  return { targets, assays, samples, nSamples: tests.length, nValidRuns: validRuns.length, warnings, nSufficient: nSuff, computedAt: new Date().toISOString(), cfgMin: cfg.baselineMin };
 }
 
 /* =====================================================================
@@ -506,8 +524,8 @@ function analyzeTest(qc, bl, cfg, assay) {
       r.reason = q.status !== 'valid' ? QC_LABEL[q.status] + ' — no quantitative comparison' : 'Insufficient baseline — not suitable for quantitative trend analysis';
     }
     if (b) {
-      if (q.status === 'nd' && b.detFrac >= 0.5) r.transition = 'Detected at baseline → not detected now (qualitative)';
-      if ((q.status === 'valid' || q.status === 'blq') && b.detFrac < 0.5) r.transition = 'Mostly not detected at baseline → detected now (qualitative)';
+      if (q.status === 'nd' && b.detFrac >= (cfg.detFracCut ?? 0.5)) r.transition = 'Detected at baseline → not detected now (qualitative)';
+      if ((q.status === 'valid' || q.status === 'blq') && b.detFrac < (cfg.detFracCut ?? 0.5)) r.transition = 'Mostly not detected at baseline → detected now (qualitative)';
     }
     per[t.key] = r;
   });
@@ -530,6 +548,7 @@ function classify(an, cfg) {
   else if (signals.length === 1 && signals[0] === 'T16S') primary = 'loadshift';
   else if (signals.length) primary = 'mixed';
   const candida = sig('Cand') === 'high' ? 'increase' : sig('Cand') === 'low' ? 'decrease' : (an.per.Cand && an.per.Cand.transition && an.per.Cand.transition.includes('detected now') ? 'newly-detected' : null);
+  if (primary === 'stable' && (candida === 'increase' || candida === 'newly-detected')) primary = 'candidaonly';
   return { primary, candida, bvUp, protDown, protUp, signals };
 }
 
@@ -541,7 +560,7 @@ class Engine {
     this.a = astro; this.cfg = cfg; this.strategy = strategy;
     Object.assign(this, {
       state: 'Baseline', urgent: false, urgentInfo: null, watch: null, bvStreak: 0, bvTaskRaised: false, candTask: false, lastPattern: null,
-      symStreak: 0, lastSymDay: null, symActive: false, symTaskOpen: false, stale: false, staleReason: null, baseline: null, approval: null,
+      symStreak: 0, lastSymDay: null, symActive: false, symTaskOpen: false, uriTaskOpen: false, lastUriDay: null, stale: false, staleReason: null, baseline: null, approval: null,
       lastTestDay: null, lastInvalid: false, nextDue: null, nextKind: null, nextReason: 'Complete baseline collection and authorized baseline review (R0)',
       tasks: [], log: [], results: {}, order: [], cart: { valid: 0, invalid: 0, triggered: 0 }, cartByDay: [], stateByDay: [], checkins: {}, lastReason: null, curRef: null,
     });
@@ -574,13 +593,16 @@ class Engine {
       this.baseline = r.snapshot; this.approval = r; const wasStale = this.stale; this.stale = false; this.closeTasks(['baseline']);
       if (this.state === 'Baseline') this.set(r.day, 'Stable', 'R0', `Baseline approved by ${r.by}. Individual reference profile is active; routine surveillance begins.`);
       else this.L(r.day, wasStale ? 'R10' : 'MR', `Replacement baseline approved by ${r.by}; previous profile preserved in the record.`);
+    } else if (r.type === 'baseline-reject') {
+      if (this.state === 'Baseline') { this.L(r.day, 'R0', `Provisional baseline rejected by ${r.by}: ${r.reason}. Remaining in Baseline; additional baseline data requested.`); this.task(r.day, 'baseline', 'R0', `Collect more baseline data — rejected: ${r.reason}`); }
+      else { this.L(r.day, 'R10', `Proposed replacement baseline rejected by ${r.by}: ${r.reason}. The existing approved baseline remains in use.`); this.task(r.day, 'baseline', 'R10', `Collect more baseline data for a replacement profile — rejected: ${r.reason}`); }
     } else if (r.type === 'baseline-keep') {
       this.stale = false; this.closeTasks(['baseline']); this.L(r.day, 'R10', `Reviewer retained the existing baseline after review (${r.by}).`);
     } else if (r.type === 'clinical-decision') {
       if (r.clearUrgent && this.urgent) { this.urgent = false; this.closeTasks(['urgent']); this.L(r.day, 'R8', 'Urgent overlay cleared by medical reviewer after assessment.'); }
       const map = { stable: 'Stable', monitor: 'Monitor', review: 'Clinical Review' };
       const ns = this.baseline ? map[r.disposition] || this.state : 'Baseline';
-      if (r.disposition !== 'review') { this.closeTasks(['symptom', 'medreview', 'clinical', 'context']); this.symTaskOpen = false; }
+      if (r.disposition !== 'review') { this.closeTasks(['symptom', 'medreview', 'clinical', 'context']); this.symTaskOpen = false; this.uriTaskOpen = false; }
       if (ns === 'Stable') this.watch = null;
       this.set(r.day, ns, 'MR', `Medical reviewer decision recorded (${r.by}): ${r.disposition === 'stable' ? 'return to routine surveillance' : r.disposition === 'monitor' ? 'continue increased monitoring' : 'remain in Clinical Review'}.`);
     }
@@ -599,14 +621,19 @@ class Engine {
       this.lastSymDay = d; this.symActive = true;
       const lp = this.lastPattern;
       if (this.state !== 'Clinical Review' && this.state !== 'Baseline') {
-        if (lp && lp.primary === 'bvlike') this.set(d, 'Clinical Review', 'R5', `Relevant vaginal symptoms (${symptomText(c)}) reported alongside a provisional BV-like pattern candidate. Medical assessment requested. The application does not prescribe treatment.`);
-        else if (lp && (lp.candida === 'increase' || lp.candida === 'newly-detected')) this.set(d, 'Clinical Review', 'R7', `Symptoms (${symptomText(c)}) reported with a recent Candida change — appropriate clinical assessment requested. PCR positivity alone does not establish yeast infection.`);
+        if (lp && lp.primary === 'bvlike') this.set(d, 'Clinical Review', 'R5', `Relevant vaginal symptoms (${symptomText(c, true)}) reported alongside a provisional BV-like pattern candidate. Medical assessment requested. The application does not prescribe treatment.`);
+        else if (lp && (lp.candida === 'increase' || lp.candida === 'newly-detected')) this.set(d, 'Clinical Review', 'R7', `Symptoms (${symptomText(c, true)}) reported with a recent Candida change — appropriate clinical assessment requested. PCR positivity alone does not establish yeast infection.`);
         else {
-          if (!this.symTaskOpen) { this.task(d, 'symptom', 'R6', `Symptom assessment: ${symptomText(c)}`); this.symTaskOpen = true; this.L(d, 'R6', `Symptoms reported (${symptomText(c)}) with stable or non-explanatory molecular measurements. Symptoms are not dismissed; symptom-assessment task created. The selected panel cannot exclude all causes of symptoms.`); }
+          if (!this.symTaskOpen) { this.task(d, 'symptom', 'R6', `Symptom assessment: ${symptomText(c, true)} — urinary or other causes cannot be excluded by this panel`); this.symTaskOpen = true; this.L(d, 'R6', `Symptoms reported (${symptomText(c, true)}) with stable or non-explanatory molecular measurements. Symptoms are not dismissed; symptom-assessment task created. The selected panel cannot exclude all causes of symptoms.`); }
           if (sev >= this.cfg.symEscSeverity || this.symStreak >= this.cfg.symEscDays) this.set(d, 'Clinical Review', 'R6', `Symptoms meet the configured mission triage policy (prototype placeholder: severity ≥ ${SEV[this.cfg.symEscSeverity]} or ≥ ${this.cfg.symEscDays} consecutive days — to be replaced by medically approved operational rules, not a universal severity threshold). Medical assessment recommended.`);
         }
-      } else if (this.state === 'Baseline' && !this.symTaskOpen) { this.task(d, 'symptom', 'R6', `Symptom assessment: ${symptomText(c)}`); this.symTaskOpen = true; this.L(d, 'R6', `Symptoms reported during baseline period (${symptomText(c)}); symptom-assessment task created.`); }
+      } else if (this.state === 'Baseline' && !this.symTaskOpen) { this.task(d, 'symptom', 'R6', `Symptom assessment: ${symptomText(c, true)} — urinary or other causes cannot be excluded by this panel`); this.symTaskOpen = true; this.L(d, 'R6', `Symptoms reported during baseline period (${symptomText(c)}); symptom-assessment task created.`); }
     } else { this.symStreak = 0; this.symActive = false; }
+    const uri = (c.symptoms || {})[URINARY[0]] || 0;
+    if (uri > 0) {   // urinary item: recorded separately, never scored, never alters qPCR pattern logic (no R5/R7)
+      this.lastUriDay = d;
+      if (!this.uriTaskOpen) { this.uriTaskOpen = true; this.task(d, 'symptom', 'R6', `Urinary symptom assessment (${SEV[uri].toLowerCase()}): possible urinary cause; urinalysis suggested. Urinary or other causes cannot be excluded by this panel.`); this.L(d, 'R6', `Urinary symptom reported (${URINARY[1].toLowerCase()}: ${SEV[uri].toLowerCase()}). Recorded separately from the microbial analysis; possible urinary cause — urinalysis suggested. The molecular panel does not assess urinary tract infection.`); }
+    }
     if (num(c.ph) != null && c.ph > 4.5) this.L(d, 'CTX', `Vaginal pH ${fmt(c.ph, 1)} (> 4.5) recorded as contextual information only — one of four Amsel criteria; cannot independently diagnose BV.`);
     this.schedule();
   }
@@ -653,9 +680,9 @@ class Engine {
     if (pat.primary === 'bvlike') {
       this.bvStreak++;
       this.L(t.day, 'R4', 'Provisional BV-like microbial pattern — not a diagnosis. Symptoms and context checked; confirmatory testing arranged.');
-      if (this.bvStreak >= 2 && !this.bvTaskRaised) { this.bvTaskRaised = true; this.task(t.day, 'medreview', 'R4', 'Non-urgent medical review: BV-like pattern confirmed on a subsequent valid test'); this.L(t.day, 'R4', 'BV-like pattern confirmed on a subsequent valid test — non-urgent medical-review flag created for the authorized reviewer.'); }
+      if (this.bvStreak >= (this.cfg.bvConfirmTests ?? 2) && !this.bvTaskRaised) { this.bvTaskRaised = true; this.task(t.day, 'medreview', 'R4', 'Non-urgent medical review: BV-like pattern confirmed on a subsequent valid test'); this.L(t.day, 'R4', 'BV-like pattern confirmed on a subsequent valid test — non-urgent medical-review flag created for the authorized reviewer.'); }
     } else this.bvStreak = 0;
-    const symRecent = this.symActive && this.lastSymDay != null && t.day - this.lastSymDay <= 1;
+    const symRecent = this.symActive && this.lastSymDay != null && t.day - this.lastSymDay <= (this.cfg.symLinkDays ?? 1);
     if (pat.primary === 'bvlike' && symRecent && this.state !== 'Clinical Review') this.set(t.day, 'Clinical Review', 'R5', 'Provisional BV-like pattern with current relevant symptoms — medical assessment requested. No treatment is prescribed.');
     if (pat.candida === 'increase' || pat.candida === 'newly-detected') {
       if (symRecent && this.state !== 'Clinical Review') this.set(t.day, 'Clinical Review', 'R7', 'Candida change with current relevant symptoms — appropriate clinical assessment requested. PCR positivity alone does not establish yeast infection.');
@@ -667,7 +694,8 @@ class Engine {
     this.lastPattern = pat; this.schedule(); res.stateAfter = this.state; res.next = { day: this.nextDue, reason: this.nextReason };
   }
 }
-function symptomText(c) { const s = SYMPTOMS.filter(([k]) => (c.symptoms || {})[k] > 0).map(([k, l]) => `${l.toLowerCase()}: ${SEV[c.symptoms[k]].toLowerCase()}`); return s.join(', ') || 'none'; }
+function symptomText(c, vaginalOnly) { const list = vaginalOnly ? SYMPTOMS : [...SYMPTOMS, URINARY]; const s = list.filter(([k]) => (c.symptoms || {})[k] > 0).map(([k, l]) => `${l.toLowerCase()}: ${SEV[c.symptoms[k]].toLowerCase()}`); return s.join(', ') || 'none'; }
+const hasAnySymptom = c => [...SYMPTOMS, URINARY].some(([k]) => ((c.symptoms || {})[k] || 0) > 0);
 
 function mergedRecords(a) {
   return [
@@ -706,13 +734,15 @@ function explain(res, a) {
   parts.push({ 'Stable': 'Continue the configured monitoring schedule.', 'Watch': 'Arrange a repeat test within 48 hours.', 'Monitor': 'Increase monitoring frequency and review trends.', 'Clinical Review': 'Refer to the authorized medical reviewer. The application does not prescribe treatment.', 'Baseline': 'Continue baseline collection.' }[res.stateAfter]);
   return parts.join(' ') + nx;
 }
-function notMeaning(res) {
+function notMeaning(res, symptomatic) {
   const out = ['A statistical deviation is not a diagnosis.', 'Individual prediction limits are statistical thresholds, not clinical disease thresholds.', 'Fold change describes magnitude only; no universal fold-change rule indicates disease.'];
   if (!res.pattern) return out;
   if (res.pattern.primary === 'bvlike') out.push('This is not a BV diagnosis. BV is diagnosed clinically (Amsel criteria, Nugent score or a validated BV test).', 'CDC: BV NAAT accuracy in asymptomatic women is not adequately established — asymptomatic deviations do not justify diagnosis or treatment.');
+  if (res.pattern.primary === 'candidaonly') out.push('Candida increase alone is recorded and contextualized — it is not a diagnosis of yeast infection.');
   if (res.pattern.primary === 'lactoenrich') out.push('An increase in Lactobacillus is not deterioration.');
   if (res.pattern.candida) out.push('Candida detection without symptoms is not an indication for treatment (CDC).');
   if (res.pattern.primary === 'stable') out.push('Stable molecular measurements cannot exclude all causes of symptoms (e.g., UTI, STIs).');
+  if (symptomatic && res.pattern.primary !== 'stable') out.push('Symptoms were reported: urinary or other causes (e.g., a urinary tract infection) cannot be excluded by this panel.');
   out.push('L. iners is not classified as harmful or protective.');
   return out;
 }
@@ -847,6 +877,23 @@ async function runBenchmark(cfg, onProgress) {
   return { table, strategies, scs, runs, L, seed: cfg.benchSeed, at: new Date().toISOString() };
 }
 
+/* ---------- CSV import (pure function; self-tested) ---------- */
+const CSV_COLUMNS = ['mission_day', 'test_date', 'assay', 'lot', 'cartridge_id', 'ntc', 'pc', 'hsc_cq', 'iac', ...TARGETS.flatMap(t => [t.key + '_status', t.key + '_cq', t.key + '_log10', t.key + '_m', t.key + '_b']), 'notes'];
+function parseTestCSV(txt) {
+  const lines = String(txt).trim().split(/\r?\n/); if (lines.length < 2) return [];
+  const h = lines[0].split(',').map(x => x.trim()); const out = [];
+  for (const ln of lines.slice(1)) {
+    if (!ln.trim()) continue; const v = ln.split(','); const g = k => { const i = h.indexOf(k); return i < 0 ? '' : (v[i] || '').trim(); };
+    const day = num(g('mission_day')); if (day == null) continue;
+    const m = { assay: g('assay'), lot: g('lot'), cartridgeId: g('cartridge_id'), date: g('test_date') || null, ntc: g('ntc') || 'none', pc: g('pc') || 'pass', hscCq: num(g('hsc_cq')), iac: g('iac') || 'pass', targets: {} };
+    const curve = {};
+    TARGETS.forEach(t => { m.targets[t.key] = { status: g(t.key + '_status') || 'missing', cq: num(g(t.key + '_cq')), log10: num(g(t.key + '_log10')) }; if (num(g(t.key + '_m')) != null || num(g(t.key + '_b')) != null) curve[t.key] = { m: num(g(t.key + '_m')), b: num(g(t.key + '_b')) }; });
+    if (Object.keys(curve).length) m.curve = curve;
+    out.push({ day, m, notes: g('notes') });
+  }
+  return out;
+}
+
 /* ---------- automated self-test (§16.3, §17) ---------- */
 function runSelfTest(cfg) {
   const T = []; const add = (group, name, pass, rule, detail = '') => T.push({ group, name, pass: !!pass, rule, detail });
@@ -896,6 +943,40 @@ function runSelfTest(cfg) {
   add('Engine', 'Incompatible assay is never compared with the baseline', r6.incompatible && r6.an.m === 0 && E6.state === P.A.E.stateByDay.find(x => x.day === 90).state && E6.log.some(e => e.day === 91 && e.rule === 'R10'), 'R10');
   const sim = simulateMission('A', 11, 'adaptive', cfg, 60), sim2 = simulateMission('A', 11, 'adaptive', cfg, 60);
   add('Simulation', 'Reproducible random seeds', JSON.stringify(sim) === JSON.stringify(sim2), '§16');
+  // ---- transition tests: state + rule ID + recommendation text + next action + audit-log entry (§17.3)
+  const trans = (E, from, to, rule, textPart, nextDelta, name) => {
+    const r = Object.values(E.results).find(x => x.day >= 1 && x.stateBefore === from && x.stateAfter === to && (x.rules || []).includes(rule));
+    const logE = r && E.log.find(e => e.ref === r.id && e.rule === rule && (from === to ? true : e.to === to));
+    const nd = r && (typeof nextDelta === 'function' ? nextDelta(r) : r.day + nextDelta);
+    add('Transitions', name, !!r && r.text.includes(textPart) && r.next && r.next.day === nd && !!logE, rule, r ? `day ${r.day} · next ${r.next && r.next.day} · "${textPart}"` : 'transition not found');
+  };
+  const routineNext = r => r.day + (r.day < cfg.adaptationDays ? cfg.adaptationInterval : cfg.routineInterval);
+  trans(P.B.E, 'Stable', 'Watch', 'R1', 'Arrange a repeat test within 48 hours', cfg.watchRepeat, 'Stable → Watch');
+  trans(P.B.E, 'Watch', 'Stable', 'R2', 'Continue the configured monitoring schedule', routineNext, 'Watch → Stable');
+  trans(P.C.E, 'Watch', 'Monitor', 'R3', 'Increase monitoring frequency', cfg.monitorInterval, 'Watch → Monitor');
+  trans(P.A.E, 'Stable', 'Stable', 'R9', 'Test invalid', cfg.invalidRepeat, 'Invalid test: no state update, repeat next day');
+  { const cr = P.C.E.log.find(e => e.rule === 'R5' && e.from === 'Monitor' && e.to === 'Clinical Review');
+    const Ec = cr && runEngine(generatePreset(PRESETS[2], cfg, cr.day, PRESETS[2].seed || 1), cfg, cr.day);
+    add('Transitions', 'Monitor → Clinical Review (symptoms + BV-like pattern)', !!cr && /Medical assessment requested/.test(cr.msg) && Ec.state === 'Clinical Review' && Ec.nextDue === Ec.lastTestDay + cfg.monitorInterval && /Increased monitoring/.test(Ec.nextReason), 'R5', cr ? `day ${cr.day} · next ${Ec.nextDue}` : 'not found'); }
+  { const ab = newAstro({ id: 'TST-BL' }); const mb = scenarioModel('A', 77); BASELINE_DAYS.forEach(d => addTest(ab, d, simMeasurement(mb, d, 77, 0, 'CAL-2026A'))); addReview(ab, 0, { type: 'baseline-approve', by: 'TEST', snapshot: computeBaseline(ab, cfg) }); const Eb = runEngine(ab, cfg, 0); const le = Eb.log.find(e => e.rule === 'R0' && e.to === 'Stable');
+    add('Transitions', 'Baseline → Stable on reviewer approval', Eb.state === 'Stable' && !!le && /approved/.test(le.msg) && Eb.nextDue === cfg.adaptationInterval && /adaptation/.test(Eb.nextReason), 'R0', `next day ${Eb.nextDue}`);
+    const ar = newAstro({ id: 'TST-RJ' }); BASELINE_DAYS.forEach(d => addTest(ar, d, simMeasurement(mb, d, 77, 0, 'CAL-2026A'))); addReview(ar, 0, { type: 'baseline-reject', by: 'TEST', reason: 'too variable' }); const Er = runEngine(ar, cfg, 0);
+    add('Transitions', 'Baseline rejection keeps Baseline, creates a task and an audit entry', Er.state === 'Baseline' && Er.tasks.some(t => t.open && /Collect more baseline data/.test(t.text)) && Er.log.some(e => e.rule === 'R0' && /rejected/.test(e.msg)), 'R0'); }
+  // ---- urinary pathway & new red flags (spec update §6.2/§6.3)
+  { const c65 = generatePreset(PRESETS[2], cfg, 65, PRESETS[2].seed || 1); addCheckin(c65, 65, { symptoms: { discharge: 0, odor: 0, itch: 0, burn: 0, urinary: 2 } }); const Eu = runEngine(c65, cfg, 65);
+    add('Urinary', 'Urinary symptom creates an R6 task with a urinalysis prompt', Eu.tasks.some(t => t.open && t.rule === 'R6' && /possible urinary cause; urinalysis suggested/.test(t.text)), 'R6');
+    add('Urinary', 'Urinary symptom does not trigger R5 (no change to qPCR pattern logic)', !Eu.log.some(e => e.day === 65 && e.rule === 'R5') && Eu.state !== 'Clinical Review', 'R5', `state day 65: ${Eu.state}`); }
+  ['flank', 'retention'].forEach(f => { const ax = JSON.parse(JSON.stringify(P.A.a)); addCheckin(ax, 91, { redFlags: [f] }); const Ex = runEngine(ax, cfg, 91); add('Urinary', `Red flag "${RED_FLAGS.find(x => x[0] === f)[1]}" triggers the Urgent overlay`, Ex.urgent && Ex.log.some(e => e.day === 91 && e.rule === 'R8'), 'R8'); });
+  // ---- application-level checks (§17.4)
+  const csvTxt = ['mission_day,assay,lot,ntc,pc,hsc_cq,iac,Lcr_status,Lcr_cq,Lcr_m,Lcr_b,Cand_status,Cand_cq', '42,BIOME-SIM-01,CAL-2026B,none,pass,26.1,pass,detected,15.20,-3.30,40,nd,', '44,BIOME-SIM-01,CAL-2026B,amplified,pass,25.9,pass,detected,15.40,,,detected,31.0'].join('\n');
+  const pc = parseTestCSV(csvTxt);
+  add('Application', 'CSV import parsing (days, controls, statuses, Cq, non-detects, run curve)', pc.length === 2 && pc[0].day === 42 && pc[0].m.targets.Lcr.cq === 15.2 && pc[0].m.targets.Cand.status === 'nd' && pc[0].m.targets.Cand.cq === null && pc[0].m.curve.Lcr.m === -3.3 && pc[1].m.ntc === 'amplified' && pc[1].m.targets.Ljen.status === 'missing' && !qcTest(pc[1].m, cfg).valid, '§6.4');
+  { const q = qcTest({ ...pc[0].m }, cfg); add('Application', 'User-entered run standard curve is used for conversion', Math.abs(q.targets.Lcr.x - (15.2 - 40) / -3.3) < 1e-9 && q.targets.Lcr.runCurve, '§7.3', fmt(q.targets.Lcr.x)); }
+  { const fl = P.A.a.tests.filter(t => t.day >= 1); const inv = fl.filter(t => !qcTest(t, cfg).valid).length;
+    add('Application', 'Cartridge count includes invalid tests', P.A.E.cart.valid + P.A.E.cart.invalid === fl.length && P.A.E.cart.invalid === inv && inv >= 1, 'R9', `${fl.length} used, ${inv} invalid`); }
+  { const before = JSON.stringify(runEngine(P.A.a, cfg, 90).log); const b2 = JSON.parse(JSON.stringify(P.B.a)); addTest(b2, 91, simMeasurement(scenarioModel('B', b2.modelSeed), 91, b2.modelSeed, 5, 'CAL-2026B', 'hsc')); addCheckin(b2, 91, { redFlags: ['pelvic'] }); runEngine(b2, cfg, 91);
+    const own = [...P.A.a.tests, ...P.A.a.checkins, ...P.A.a.reviews].every(r => r.id.startsWith('AST-A-'));
+    add('Application', 'Astronaut records stay isolated', before === JSON.stringify(runEngine(P.A.a, cfg, 90).log) && own && !runEngine(P.A.a, cfg, 91).urgent, '§14.1'); }
   return { tests: T, pass: T.filter(t => t.pass).length, total: T.length, at: new Date().toISOString() };
 }
 
@@ -925,7 +1006,7 @@ const AnalyticalEngine = { qc: qcTest, baseline: computeBaseline, analyze: analy
 const PatternEngine = { classify };                                                       // BV-associated · Lactobacillus · Candida · symptom context
 const DecisionEngine = { Engine, run: runEngine };                                         // monitoring state · rules · next action · schedule
 
-const ANALYTICAL_KEYS = ['baselineMin', 'alpha', 'adaptationDays', 'adaptationInterval', 'routineInterval', 'watchRepeat', 'monitorInterval', 'invalidRepeat', 'bvMinElevated', 'protMinReduced', 'cqTol', 'iacPolicy', 'symEscSeverity', 'symEscDays', 'highVarSd', 'cartridges', 'reserveWarn'];
+const ANALYTICAL_KEYS = ['provisionalMult', 'symLinkDays', 'bvConfirmTests', 'detFracCut', 'baselineMin', 'alpha', 'adaptationDays', 'adaptationInterval', 'routineInterval', 'watchRepeat', 'monitorInterval', 'invalidRepeat', 'bvMinElevated', 'protMinReduced', 'cqTol', 'iacPolicy', 'symEscSeverity', 'symEscDays', 'highVarSd', 'cartridges', 'reserveWarn'];
 const SIM_KEYS = ['benchRuns', 'benchSeed', 'missionLength', 'invalidProb'];
 const App = {
   astros: {}, cfg: { ...DEFAULT_CONFIG }, meta: { currentDay: 75, autoCheckins: true, cfgVersion: 1, cfgLog: [] },
@@ -992,7 +1073,7 @@ const SUBS = {
 const LOGO = `<svg width="34" height="34" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="lg" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#4fd1c5"/><stop offset="1" stop-color="#7aa2ff"/></linearGradient></defs><circle cx="32" cy="32" r="29" fill="none" stroke="url(#lg)" stroke-width="3"/><ellipse cx="32" cy="32" rx="29" ry="10" fill="none" stroke="#7aa2ff" stroke-opacity=".55" stroke-width="2" transform="rotate(-28 32 32)"/><circle cx="26" cy="28" r="6" fill="#4fd1c5"/><circle cx="38" cy="36" r="4" fill="#7aa2ff"/><circle cx="35" cy="24" r="2.6" fill="#e7edf7"/><circle cx="25" cy="40" r="2.2" fill="#a78bfa"/></svg>`;
 function renderNav() {
   const st = App.selfTest;
-  document.getElementById('nav').innerHTML = `<div class="brand">${LOGO}<h1>BIOME</h1></div><small class="brandsub"><b>B</b>aseline-<b>I</b>ndividualized <b>O</b>nboard <b>M</b>icrobiome <b>E</b>valuation</small>` +
+  document.getElementById('nav').innerHTML = `<div class="brand">${LOGO}<h1>BIOME</h1></div><div class="fullname">Adaptive Vaginal Health Monitor</div><small class="brandsub"><b>B</b>aseline-<b>I</b>ndividualized <b>O</b>nboard <b>M</b>icrobiome <b>E</b>valuation</small>` +
     NAV.map(([g, items]) => `<div class="navgrp">${g}</div>` + items.map(([v, i, l]) => `<button class="nav ${App.view === v ? 'on' : ''}" data-act="go" data-v="${v}" ${App.view === v ? 'aria-current="page"' : ''}><span class="ico" aria-hidden="true">${i}</span>${l}</button>`).join('')).join('') +
     `<div class="selftest-pill">${st ? `<button class="linkbtn" data-act="go" data-v="methods" data-s="selftest" style="color:${st.pass === st.total ? 'var(--stable)' : 'var(--urgent)'}"><b>Self-test ${st.pass}/${st.total} ${st.pass === st.total ? '✓' : '✗'}</b></button><br>` : 'Self-test running…<br>'}<span class="tiny">Research &amp; decision-support prototype. Not a clinically validated medical device. All demonstration records are simulated.</span>${App.persistent ? '' : '<br><span class="tiny" style="color:var(--watch)">IndexedDB unavailable — data held in memory only.</span>'}</div>`;
 }
@@ -1002,11 +1083,23 @@ function renderTop() {
   <div class="grp"><label for="astroSel">Astronaut</label><select id="astroSel" data-change="astro">${ids().map(id => `<option value="${id}" ${id === App.sel ? 'selected' : ''}>${esc(id)}${App.astros[id].simulated ? ' (simulated)' : ''}</option>`).join('')}</select></div>
   <div class="grp"><label>Mission day</label><div class="daybox"><button data-act="day" data-d="-1" aria-label="Previous mission day">◀</button><span aria-live="polite">Day ${App.meta.currentDay} · ${a ? dateOf(a, App.meta.currentDay) : ''}</span><button data-act="day" data-d="1" aria-label="Advance mission day">▶</button></div></div>
   <div class="grp">${E ? catBadge(E.state, E.urgent) : ''}</div>
-  <div class="grp"><label>View as</label><div class="seg" role="group" aria-label="Role"><button class="${App.role === 'astronaut' ? 'on' : ''}" data-act="role" data-r="astronaut" aria-pressed="${App.role === 'astronaut'}">Astronaut</button><button class="${App.role === 'reviewer' ? 'on' : ''}" data-act="role" data-r="reviewer" aria-pressed="${App.role === 'reviewer'}">Medical reviewer</button></div></div>
-  <span class="simpill" title="All demonstration records are simulated. No synthetic measurement is an actual NASA measurement.">Simulated data · prototype</span>`;
+  <div class="grp"><label title="Demo role switch — not authentication">View as <span class="dim">(demo switch, not authentication)</span></label><div class="seg" role="group" aria-label="Role (demo switch, not authentication)"><button class="${App.role === 'astronaut' ? 'on' : ''}" data-act="role" data-r="astronaut" aria-pressed="${App.role === 'astronaut'}">Astronaut</button><button class="${App.role === 'reviewer' ? 'on' : ''}" data-act="role" data-r="reviewer" aria-pressed="${App.role === 'reviewer'}">Medical reviewer</button></div></div>
+  <span class="topname">Adaptive Vaginal Health Monitor · BIOME</span><span class="simpill" title="All demonstration records are simulated. No synthetic measurement is an actual NASA measurement.">Simulated data · prototype</span>`;
   const u = document.getElementById('urgent');
   if (E && E.urgent) { u.className = 'show'; u.innerHTML = `<span style="font-size:26px" aria-hidden="true">⚠</span><div><strong>URGENT — ${esc(a.code)}: seek immediate medical assistance per the mission medical protocol.</strong><div class="small">Red-flag symptom reported on Mission Day ${E.urgentInfo.day}: ${esc(E.urgentInfo.flags.map(f => (RED_FLAGS.find(x => x[0] === f) || [f, f])[1]).join('; '))}. This does not wait for molecular analysis. It is cleared only by a recorded medical-reviewer decision.</div></div><button class="btn" style="margin-left:auto" data-act="go" data-v="review" data-s="tasks">Open medical review</button>`; }
   else { u.className = ''; u.innerHTML = ''; }
+}
+/** Every data table gets a <caption> (from the nearest heading when none was given) and scoped header cells. */
+function a11yTables(root) {
+  if (!root || !root.querySelectorAll) return;
+  root.querySelectorAll('table').forEach(tb => {
+    tb.querySelectorAll('thead th:not([scope])').forEach(th => th.setAttribute('scope', 'col'));
+    if (!tb.querySelector('caption')) {
+      let n = tb, txt = '';
+      while (n && n !== root && !txt) { let p = n.previousElementSibling; while (p && !txt) { const h = p.matches && p.matches('h2,h3,h4') ? p : (p.querySelector && p.querySelector('h2,h3,h4')); if (h) txt = h.textContent.trim(); p = p.previousElementSibling; } n = n.parentElement; }
+      const c = document.createElement('caption'); c.className = 'vh'; c.textContent = txt || 'Data table'; tb.insertBefore(c, tb.firstChild);
+    }
+  });
 }
 function subTabs(view) {
   const subs = SUBS[view]; if (!subs) return '';
@@ -1017,6 +1110,7 @@ function render() {
   renderNav(); renderTop();
   const v = document.getElementById('view'); const fn = VIEWS[App.view] || VIEWS.dashboard;
   try { v.innerHTML = fn(); } catch (e) { console.error(e); v.innerHTML = `<div class="notice bad"><b>Render error</b> ${esc(e.message)}</div>`; }
+  a11yTables(v);
   const key = App.view + (SUBS[App.view] ? '.' + App.sub[App.view] : ''); AFTER[key] && AFTER[key]();
 }
 
@@ -1059,7 +1153,7 @@ function seriesFor(E, key) {
   return pts;
 }
 const invalidDays = E => E.order.map(id => E.results[id]).filter(r => !r.qc.valid).map(r => r.day);
-function dataTable(heads, rows, cls = '') { return `<div class="tablewrap ${cls}"><table><thead><tr>${heads.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.length ? rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('') : `<tr><td colspan="${heads.length}" class="muted">No records.</td></tr>`}</tbody></table></div>`; }
+function dataTable(heads, rows, caption = '') { return `<div class="tablewrap"><table>${caption ? `<caption class="vh">${esc(caption)}</caption>` : ''}<thead><tr>${heads.map(h => `<th scope="col">${h}</th>`).join('')}</tr></thead><tbody>${rows.length ? rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('') : `<tr><td colspan="${heads.length}" class="muted">No records.</td></tr>`}</tbody></table></div>`; }
 function seriesTable(E, keys) {
   const rows = E.order.map(id => E.results[id]).map(r => [r.day, dateOf(A(), r.day), r.qc.valid ? 'Pass' : '<span class="qc-qcfail">QC failure</span>', ...keys.map(k => { const q = r.qc.targets[k]; const p = r.an && r.an.per[k]; return q.status === 'valid' || q.status === 'blq' ? `${fmt(q.x)}${q.status === 'blq' ? ' (BLQ)' : ''}${p && p.signal ? ` <b class="sig-${p.signal}">${p.signal === 'high' ? '↑ outside' : '↓ outside'}</b>` : ''}` : `<span class="qc-${q.status}">${q.status === 'nd' ? 'ND' : q.status === 'qcfail' ? 'QC fail' : '—'}</span>`; })]);
   return dataTable(['Day', 'Date', 'Run QC', ...keys.map(k => TK[k].name)], rows);
@@ -1146,7 +1240,9 @@ SV['health.checkin'] = () => {
     <h3><span class="stepnum">1</span> Symptoms</h3><p class="muted" style="margin-top:-4px">How are you feeling today?</p>
     <div class="row"><button type="button" class="btn pri lg" data-act="nosym">✓ No symptoms today</button><button type="button" class="btn lg" data-act="showsym" aria-expanded="false" aria-controls="symbox">Report symptoms…</button></div>
     <div id="symbox" hidden><p class="small muted" style="margin:14px 0 8px">Descriptive self-reports — never combined into a score or diagnosis.</p>
-      <div class="symgrid" role="group" aria-label="Symptom questionnaire">${SYMPTOMS.map(([k, l]) => `<div class="small">${l}</div><div class="radio-seg" role="radiogroup" aria-label="${l}">${SEV.map((s, i) => `<label><input type="radio" name="sym_${k}" value="${i}" ${i === 0 ? 'checked' : ''}><span>${s}</span></label>`).join('')}</div>`).join('')}</div></div>
+      <div class="symgrid" role="group" aria-label="Symptom questionnaire">${SYMPTOMS.map(([k, l]) => `<div class="small">${l}</div><div class="radio-seg" role="radiogroup" aria-label="${l}">${SEV.map((s, i) => `<label><input type="radio" name="sym_${k}" value="${i}" ${i === 0 ? 'checked' : ''}><span>${s}</span></label>`).join('')}</div>`).join('')}</div>
+      <div class="symgrid urinary" role="group" aria-label="Urinary symptom (optional)"><div class="small">${URINARY[1]} <span class="pill">optional</span></div><div class="radio-seg" role="radiogroup" aria-label="${URINARY[1]}">${SEV.map((s, i) => `<label><input type="radio" name="sym_${URINARY[0]}" value="${i}" ${i === 0 ? 'checked' : ''}><span>${s}</span></label>`).join('')}</div></div>
+      <p class="tiny dim" style="margin:6px 0 0">The urinary item is recorded separately for referral only — it is never scored and never changes the microbial analysis.</p></div>
     <h3 style="margin-top:22px"><span class="stepnum">2</span> Additional measurement <span class="pill">optional</span></h3>
     <label class="f" style="max-width:220px">Vaginal pH<input type="number" name="ph" step="0.1" min="3" max="8" placeholder="e.g. 4.2"></label>
     <details class="section" style="margin-top:18px"><summary><span class="stepnum">3</span> Additional information <span class="pill">optional</span></summary>
@@ -1173,7 +1269,12 @@ SV['health.checkin'] = () => {
 AFTER['health.checkin'] = () => {
   const f = document.querySelector('form[data-form=checkin]'); if (!f) return;
   const upd = () => { const v = k => +((f.querySelector(`input[name=sym_${k}]:checked`) || {}).value || 0); const h = []; const E = eng(); const stable = E.lastPattern && E.lastPattern.primary === 'stable';
-    if (v('discharge') || v('odor')) h.push('This symptom pattern can occur with BV.'); if (v('itch') || v('burn')) h.push('This symptom pattern can occur with yeast infection.'); if ((v('discharge') || v('odor') || v('itch') || v('burn')) && stable) h.push('The current microbial panel does not explain these symptoms.');
+    if (v('discharge') || v('odor')) h.push('This symptom pattern can occur with BV.');
+    if (v('itch')) h.push('This symptom pattern can occur with yeast infection.');
+    if (v('burn')) h.push('This symptom pattern can occur with yeast infection or a urinary tract infection. A urine test may be needed.');
+    if (v('urinary')) h.push('Urinary symptoms can indicate a urinary tract infection. A urine test (urinalysis) may be needed — the molecular panel does not assess UTI.');
+    if ((v('discharge') || v('odor') || v('itch') || v('burn')) && stable) h.push('The current microbial panel does not explain these symptoms.');
+    if (v('discharge') || v('odor') || v('itch') || v('burn') || v('urinary')) h.push('Urinary or other causes cannot be excluded by this panel.');
     if (h.length) document.getElementById('hints').innerHTML = h.map(x => `• ${esc(x)}`).join('<br>') + '<div class="tiny dim" style="margin-top:6px">These are prompts for assessment, not diagnoses. Symptoms are never dismissed because molecular results are stable.</div>'; };
   f.addEventListener('change', upd);
 };
@@ -1186,12 +1287,18 @@ SV['health.test'] = () => {
   <section data-stepbody="1">
     <div class="formgrid">
       <label class="f">Mission day<input type="number" name="day" value="${d}" required></label>
+      <label class="f">Test date<input type="date" name="date" value="${dateOf(a, d)}" required></label>
       <label class="f">Assay<select name="assay">${Object.keys(ASSAYS).map(k => `<option value="${k}" ${k === 'BIOME-SIM-01' ? 'selected' : ''}>${esc(k)}</option>`).join('')}</select></label>
-      <label class="f">Cartridge / calibration lot<select name="lot"></select></label>
+      <label class="f">Calibration-lot ID<select name="lot"></select></label>
+      <label class="f">Cartridge ID<input type="text" name="cartridgeId" placeholder="e.g. CRT-0457" autocomplete="off"></label>
       <label class="f">Sample ID<input type="text" value="auto-generated (pseudonymous)" disabled></label>
     </div>
+    <details class="section"><summary>Sample context <span class="pill">optional</span></summary><div class="formgrid" style="margin-top:10px">
+      <label class="f">Cycle phase at collection<select name="cycle">${CYCLE_TAGS.map(o => `<option ${o === cyclePhase(a, d) ? 'selected' : ''}>${o}</option>`).join('')}</select></label>
+      <label class="f" style="grid-column:span 2">Hormonal / medication context<input type="text" name="meds" placeholder="e.g. continuous OCP; no antibiotics in 90 days"></label>
+    </div><p class="tiny dim">Stored with the sample; for pre-flight samples it is shown in the baseline review.</p></details>
     <div class="tiny dim" style="margin:8px 0 12px">${d < 0 ? 'Negative day → pre-flight baseline sample.' : 'In-flight sample — uses one cartridge whether valid or not.'} ${E.nextDue != null ? `Next scheduled test: Mission Day ${E.nextDue}.` : ''}</div>
-    <h4>Sample-collection checklist</h4>${['Sterile single-use swab used', 'Sample tube sealed and labelled with coded ID', 'Extraction/reaction kit lot recorded', 'Cartridge loaded in the analyzer'].map((l, i) => `<label class="check"><input type="checkbox" name="ck${i}" checked> ${l}</label>`).join('')}
+    <h4>Sample-collection checklist</h4>${['Sterile single-use swab used', 'Sample tube sealed and labelled with coded ID', 'Extraction/reaction kit lot recorded', 'Cartridge loaded in the analyzer'].map((l, i) => `<label class="check"><input type="checkbox" name="ck${i}"> ${l}</label>`).join('')}<div class="tiny dim">Tick each step as it is completed — what you tick is stored with the test.</div>
     <div class="row stepnav"><span></span><button type="button" class="btn pri" data-act="step" data-s="2">Next: enter measurements →</button></div>
   </section>
   <section data-stepbody="2" hidden>
@@ -1207,7 +1314,12 @@ SV['health.test'] = () => {
       <label class="f">Human sample control Cq<input type="number" name="hscCq" step="0.01" placeholder="blank = not amplified"></label>
       <label class="f">Internal amplification control<select name="iac"><option value="pass">Pass</option><option value="inhibited">Inhibition</option><option value="fail">Fail</option></select></label>
     </div>
-    <details class="section" style="margin-top:14px"><summary>Advanced: calibration &amp; QC criteria</summary><div id="curveInfo" style="margin-top:10px"></div></details>
+    <p class="small muted" id="curveSummary" style="margin:12px 0 0"></p>
+    <details class="section" style="margin-top:8px"><summary>Advanced: standard curve for this run, calibration &amp; QC criteria</summary>
+      <p class="small muted" style="margin:10px 0 6px">Pre-filled from the selected calibration lot. If the instrument reports run-specific standard-curve parameters, enter them here — they are stored with this run and used for conversion.</p>
+      <div class="tablewrap" style="max-height:none"><table class="entry"><caption class="vh">Standard-curve parameters for this run</caption><thead><tr><th scope="col">Target</th><th scope="col">Slope m</th><th scope="col">Intercept b</th><th scope="col">LOD · LOQ · upper limit (log10)</th></tr></thead><tbody>
+      ${TARGETS.map(t => `<tr><th scope="row" class="rowh">${t.name}</th><td><input type="number" step="0.001" name="m_${t.key}" aria-label="${t.name} slope m"></td><td><input type="number" step="0.01" name="b_${t.key}" aria-label="${t.name} intercept b"></td><td class="small muted" id="lim_${t.key}">—</td></tr>`).join('')}</tbody></table></div>
+      <div id="curveInfo" style="margin-top:10px"></div></details>
     <div class="row stepnav"><button type="button" class="btn" data-act="step" data-s="1">← Back</button><button type="button" class="btn pri" data-act="step" data-s="3">Next: review →</button></div>
   </section>
   <section data-stepbody="3" hidden>
@@ -1218,16 +1330,26 @@ SV['health.test'] = () => {
   </form>`;
 };
 function readTestForm(f) {
-  const el = n => f.elements[n]; const m = { assay: el('assay').value, lot: el('lot').value, ntc: el('ntc').value, pc: el('pc').value, hscCq: num(el('hscCq').value), iac: el('iac').value, targets: {} };
-  TARGETS.forEach(t => { m.targets[t.key] = { status: el('st_' + t.key).value, cq: num(el('cq_' + t.key).value), log10: num(el('lg_' + t.key).value) }; });
+  const el = n => f.elements[n]; const m = { assay: el('assay').value, lot: el('lot').value, cartridgeId: el('cartridgeId').value.trim(), date: el('date').value || null, cycle: el('cycle').value, meds: el('meds').value.trim(), ntc: el('ntc').value, pc: el('pc').value, hscCq: num(el('hscCq').value), iac: el('iac').value, targets: {}, curve: {} };
+  TARGETS.forEach(t => { m.targets[t.key] = { status: el('st_' + t.key).value, cq: num(el('cq_' + t.key).value), log10: num(el('lg_' + t.key).value) }; m.curve[t.key] = { m: num(el('m_' + t.key).value), b: num(el('b_' + t.key).value) }; });
   return m;
 }
-function fillLots(f, keep) { const lots = Object.keys((ASSAYS[f.elements.assay.value] || { lots: {} }).lots); const sel = f.elements.lot; const cur = keep || sel.value; sel.innerHTML = lots.map(k => `<option ${k === cur || (!lots.includes(cur) && k === lots[lots.length - 1]) ? 'selected' : ''}>${k}</option>`).join(''); }
+function fillLots(f, keep) { const lots = Object.keys((ASSAYS[f.elements.assay.value] || { lots: {} }).lots); const sel = f.elements.lot; const cur = keep || sel.value; sel.innerHTML = lots.map(k => `<option ${k === cur || (!lots.includes(cur) && k === lots[lots.length - 1]) ? 'selected' : ''}>${k}</option>`).join(''); fillCurve(f); }
+function fillCurve(f) { const lot = (ASSAYS[f.elements.assay.value] || { lots: {} }).lots[f.elements.lot.value]; TARGETS.forEach(t => { const c = lot && lot.curves[t.key]; f.elements['m_' + t.key].value = c ? c.m : ''; f.elements['b_' + t.key].value = c ? c.b : ''; const li = document.getElementById('lim_' + t.key); if (li) li.textContent = c ? `${c.lod} · ${c.loq} · ${c.uloq}` : '—'; }); }
 AFTER['health.test'] = () => {
   const f = document.querySelector('form[data-form=test]'); if (!f) return; fillLots(f, 'CAL-2026B');
-  const upd = e => { if (e && e.target && e.target.name === 'assay') fillLots(f); const lot = (ASSAYS[f.elements.assay.value] || { lots: {} }).lots[f.elements.lot.value];
-    document.getElementById('curveInfo').innerHTML = lot ? `<div class="formula">Cq = m · log10(N) + b      →      log10(N) = (Cq − b) / m</div>` + dataTable(['Target', 'Slope m', 'Intercept b', 'LOD (log10)', 'LOQ (log10)', 'Upper limit'], TARGETS.map(t => { const c = lot.curves[t.key]; return [t.name, c.m, c.b, c.lod, c.loq, c.uloq]; })) + `<div class="tiny dim" style="margin-top:6px">Human sample control accepted if Cq ≤ ${lot.hsc.maxCq}. Inhibition policy: ${esc(App.cfg.iacPolicy)}. ${evTag('Hypothetical simulated calibration', 'ev-sim')} These criteria come from the selected assay — never universal thresholds, and they cannot be overridden here.</div>` : '<div class="notice bad"><b>No calibration</b><span>Calibrated abundance cannot be calculated.</span></div>';
-    TARGETS.forEach(t => { const cq = num(f.elements['cq_' + t.key].value), el = document.getElementById('live_' + t.key); el.textContent = lot && cq != null ? fmt((cq - lot.curves[t.key].b) / lot.curves[t.key].m) : '—'; }); };
+  const upd = e => {
+    const nm = e && e.target && e.target.name;
+    if (nm === 'assay') fillLots(f); else if (nm === 'lot') fillCurve(f);
+    if (nm === 'day' && !f.elements.date.dataset.touched) { const dd = num(f.elements.day.value); if (dd != null) f.elements.date.value = dateOf(A(), dd); }
+    if (nm === 'date') f.elements.date.dataset.touched = '1';
+    const lot = (ASSAYS[f.elements.assay.value] || { lots: {} }).lots[f.elements.lot.value]; const m = readTestForm(f);
+    const changed = lot ? TARGETS.filter(t => m.curve[t.key].m !== lot.curves[t.key].m || m.curve[t.key].b !== lot.curves[t.key].b).map(t => t.name) : [];
+    document.getElementById('curveSummary').innerHTML = lot ? (changed.length ? `Standard curve: <b style="color:var(--watch)">run-specific values entered for ${esc(changed.join(', '))}</b>; other targets use ${esc(f.elements.lot.value)}.` : `Standard curve: lot ${esc(f.elements.lot.value)} values (open Advanced to enter run-specific m and b).`) : '';
+    document.getElementById('curveInfo').innerHTML = lot ? `<div class="formula">Cq = m · log10(N) + b      →      log10(N) = (Cq − b) / m</div><div class="tiny dim" style="margin-top:6px">Human sample control accepted if Cq ≤ ${lot.hsc.maxCq}. Inhibition policy: ${esc(App.cfg.iacPolicy)}. Detection/quantification limits come from the assay definition. ${evTag('Hypothetical simulated calibration', 'ev-sim')} Control acceptance criteria cannot be overridden here.</div>` : '<div class="notice bad"><b>No calibration</b><span>Calibrated abundance cannot be calculated.</span></div>';
+    TARGETS.forEach(t => { const cq = num(f.elements['cq_' + t.key].value), c = m.curve[t.key], el = document.getElementById('live_' + t.key); el.textContent = lot && cq != null && c.m != null && c.m < 0 && c.b != null ? fmt((cq - c.b) / c.m) : '—'; });
+    a11yTables(f);
+  };
   f.addEventListener('input', upd); f.addEventListener('change', upd); upd();
 };
 function gotoStep(f, n) {
@@ -1239,6 +1361,7 @@ function renderQcPreview(f) {
   const m = readTestForm(f), day = num(f.elements.day.value), qc = qcTest(m, App.cfg), E = eng();
   const cnt = s => TARGETS.filter(t => qc.targets[t.key].status === s).length;
   const issues = TARGETS.filter(t => ['qcfail', 'missing'].includes(qc.targets[t.key].status)).map(t => `${t.name}: ${qc.targets[t.key].note || QC_LABEL[qc.targets[t.key].status]}`);
+  const ckN = [0, 1, 2, 3].filter(i => f.elements['ck' + i].checked).length; const runCurve = TARGETS.filter(t => qc.targets[t.key].runCurve).map(t => t.name);
   const incompat = qc.valid && day >= 1 && E.baseline && E.baseline.assays && E.baseline.assays.length && !E.baseline.assays.includes(m.assay);
   document.getElementById('qcpreview').innerHTML = (qc.valid
     ? `<div class="notice ok"><b>✓ Quality control passes</b><span>All run and sample controls meet the ${esc(m.assay)} acceptance criteria. ${cnt('valid')} quantifiable · ${cnt('blq')} detected but not quantifiable · ${cnt('nd')} not detected${cnt('missing') ? ` · ${cnt('missing')} not run` : ''}.</span></div>`
@@ -1246,12 +1369,14 @@ function renderQcPreview(f) {
     (qc.warnings.length ? `<div class="notice warn"><b>Flag</b><span>${esc(qc.warnings.join(' '))}</span></div>` : '') +
     (issues.length && qc.valid ? `<div class="notice warn"><b>Target issues</b><span>${issues.map(esc).join('<br>')}</span></div>` : '') +
     (incompat ? `<div class="notice warn"><b>Assay change</b><span>${esc(m.assay)} differs from the baseline assay (${esc(E.baseline.assays.join(', '))}). Results will be recorded but not compared with the baseline until a validated conversion or new reviewed baseline exists.</span></div>` : '') +
-    `<p class="small muted">On saving, BIOME converts Cq values with the ${esc(m.lot)} calibration, compares each target with the individual baseline, applies multiple-target correction, interprets patterns and updates the monitoring state.</p>`;
+    (ckN < 4 ? `<div class="notice warn"><b>Checklist</b><span>${ckN} of 4 collection steps ticked. The test can still be saved; the checklist is stored with it.</span></div>` : '') +
+    (runCurve.length ? `<div class="notice info"><b>Run curve</b><span>Run-specific standard-curve parameters will be used for ${esc(runCurve.join(', '))}.</span></div>` : '') +
+    `<p class="small muted">Test date ${esc(m.date || '—')} · cartridge ${esc(m.cartridgeId || 'not entered')} · lot ${esc(m.lot)}. On saving, BIOME converts Cq values with the ${esc(m.lot)} calibration, compares each target with the individual baseline, applies multiple-target correction, interprets patterns and updates the monitoring state.</p>`;
   document.getElementById('submitTest').textContent = qc.valid ? 'Analyze & save' : 'Save as invalid test';
 }
 function fillTestForm(m) {
   const f = document.querySelector('form[data-form=test]'); if (!f) return; const el = n => f.elements[n];
-  el('assay').value = m.assay; fillLots(f, m.lot); el('ntc').value = m.ntc; el('pc').value = m.pc; el('hscCq').value = m.hscCq ?? ''; el('iac').value = m.iac;
+  el('assay').value = m.assay; fillLots(f, m.lot); if (!el('cartridgeId').value) el('cartridgeId').value = 'CRT-SIM-' + String(Math.floor(Math.random() * 9000) + 1000); el('ntc').value = m.ntc; el('pc').value = m.pc; el('hscCq').value = m.hscCq ?? ''; el('iac').value = m.iac;
   TARGETS.forEach(t => { const e = m.targets[t.key] || {}; el('st_' + t.key).value = e.status || 'missing'; el('cq_' + t.key).value = e.cq ?? ''; el('lg_' + t.key).value = e.log10 ?? ''; });
   f.dispatchEvent(new Event('input'));
 }
@@ -1271,6 +1396,7 @@ SV['health.schedule'] = () => {
    LEVEL 1 — RESULTS: conclusion first, calculations on demand
    ===================================================================== */
 const FIND_DOMAINS = [['Protective Lactobacillus', ['Lcr', 'Ljen', 'Lgas']], ['L. iners', ['Lin']], ['BV-associated markers', ['Gva', 'Fva', 'Meg', 'BVAB2']], ['Candida', ['Cand']], ['Total bacterial load', ['T16S']]];
+function symptomaticNear(a, day) { const w = App.cfg.symLinkDays ?? 1; return a.checkins.filter(c => c.day <= day && c.day >= day - w && hasAnySymptom(c)); }
 function domainFinding(r, keys) {
   if (!r.qc.valid) return ['Not assessed', 'invalid test', 'f-na'];
   if (!r.an) return ['Recorded', 'no approved baseline yet', 'f-na'];
@@ -1325,7 +1451,7 @@ function advancedAnalysis(r, a) {
   const rules = r.rules || []; const grouped = RULE_GROUPS.map(([g, rs]) => [g, rules.filter(x => rs.includes(x))]).filter(([, rs]) => rs.length);
   return `<details class="section adv"><summary>Advanced analysis <span class="dim small">— QC details · individual measurements · prediction limits · p-values · fold changes · rule IDs · evidence</span></summary>
   <h4>Quality control</h4><div class="notice ${r.qc.valid ? 'ok' : 'bad'}"><b>${r.qc.valid ? 'Pass' : 'Rejected'}</b><span>${esc(r.qc.valid ? 'Run and sample controls met the (simulated) assay acceptance criteria.' : r.qc.reasons.join(' '))} ${esc(r.qc.warnings.join(' '))}</span></div>
-  <dl class="kv small"><dt>Assay / lot</dt><dd>${esc(t.assay)} / ${esc(t.lot)}</dd><dt>Controls</dt><dd>NTC ${esc(t.ntc)} · PC ${esc(t.pc)} · HSC Cq ${fmt(num(t.hscCq))} · IAC ${esc(t.iac)}</dd><dt>Source</dt><dd>${esc(r.source)}${r.triggered ? ' · additional (triggered) test' : ''}</dd><dt>Configuration</dt><dd>Analyzed under configuration v${App.meta.cfgVersion} (all records are re-analyzed when an analytical setting changes)</dd></dl>
+  <dl class="kv small"><dt>Test date</dt><dd>${esc(t.date || dateOf(a, t.day))}</dd><dt>Assay / calibration lot</dt><dd>${esc(t.assay)} / ${esc(t.lot)}</dd><dt>Cartridge ID</dt><dd>${esc(t.cartridgeId || '—')}</dd><dt>Standard curve</dt><dd>${TARGETS.some(k => r.qc.targets[k.key].runCurve) ? 'run-specific values for ' + esc(TARGETS.filter(k => r.qc.targets[k.key].runCurve).map(k => k.name).join(', ')) : 'calibration-lot values'}</dd><dt>Collection checklist</dt><dd>${t.checklist ? t.checklist.filter(Boolean).length + ' of ' + t.checklist.length + ' steps ticked' : 'not recorded'}</dd>${t.cycle || t.meds ? `<dt>Sample context</dt><dd>${esc([t.cycle, t.meds].filter(Boolean).join(' · '))}</dd>` : ''}<dt>Controls</dt><dd>NTC ${esc(t.ntc)} · PC ${esc(t.pc)} · HSC Cq ${fmt(num(t.hscCq))} · IAC ${esc(t.iac)}</dd><dt>Source</dt><dd>${esc(r.source)}${r.triggered ? ' · additional (triggered) test' : ''}</dd><dt>Configuration</dt><dd>Analyzed under configuration v${App.meta.cfgVersion} (all records are re-analyzed when an analytical setting changes)</dd></dl>
   <h4>Individual measurements vs baseline</h4>
   <div class="tablewrap" style="max-height:none"><table><thead><tr><th>Target</th><th>QC</th><th class="num">Cq</th><th class="num">log10</th><th class="num">Baseline mean (n)</th><th class="num">Δ log10</th><th class="num">Fold</th><th class="num">Prediction limits</th><th class="num">p raw</th><th class="num">Holm thr / p adj</th><th>Result</th></tr></thead><tbody>
   ${TARGETS.map(tg => { const q = r.qc.targets[tg.key], p = r.an && r.an.per[tg.key]; return `<tr><td><b>${tg.name}</b></td><td><span class="qc-${q.status}" title="${esc(QC_LABEL[q.status])}">${esc(QC_SHORT[q.status])}</span>${q.note ? `<div class="tiny dim">${esc(q.note)}</div>` : ''}</td><td class="num">${fmt(q.cq)}</td><td class="num">${fmt(q.x)}</td><td class="num">${p && p.mean != null ? fmt(p.mean) + ` (${p.n})` : '—'}</td><td class="num">${p && p.quant ? fmt(p.diff) : '—'}</td><td class="num">${p && p.quant ? fmtFold(p.fold) : '—'}</td><td class="num">${p && p.quant ? fmt(p.lo) + ' – ' + fmt(p.hi) : '—'}</td><td class="num">${p && p.quant ? fmtP(p.p) : '—'}</td><td class="num">${p && p.quant ? fmtP(p.holmThr) + ' / ' + fmtP(p.padj) : '—'}</td><td>${resultCell(p, r, tg)}</td></tr>`; }).join('')}
@@ -1334,7 +1460,7 @@ function advancedAnalysis(r, a) {
   ${r.pattern ? `<h4>Pattern interpretation</h4><p class="small"><b>${esc(PATTERNS[r.pattern.primary].label)}</b> — ${esc(PATTERNS[r.pattern.primary].interp)}. ${r.pattern.primary === 'bvlike' ? evTag('Provisional engineering heuristic', 'ev-assume') : ''}</p>` : ''}
   <h4>Decision rules applied</h4>${grouped.length ? dataTable(['Group', 'Rule', 'Meaning'], grouped.flatMap(([g, rs]) => rs.map(x => [esc(g), ruleTag(x), esc(RULES[x])]))) : '<p class="small muted">—</p>'}
   <h4>Full deterministic explanation</h4><p class="small">${esc(r.text)}</p>
-  <div class="grid g2"><div><h4>What this does not mean</h4><ul class="small" style="padding-left:18px;margin:0">${notMeaning(r).map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>
+  <div class="grid g2"><div><h4>What this does not mean</h4><ul class="small" style="padding-left:18px;margin:0">${notMeaning(r, r.day >= 1 && symptomaticNear(a, r.day).length > 0).map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>
   <div><h4>Evidence &amp; assumptions</h4><div class="small" style="line-height:2">${evTag("Student's t prediction interval — statistical method", 'ev-stat')} ${evTag('Holm (1979) — published method', 'ev-stat')} ${evTag(`Baseline minimum ${App.cfg.baselineMin} — prototype assumption`, 'ev-assume')} ${evTag('Calibration — simulated', 'ev-sim')} ${evTag('Schedule intervals — prototype defaults', 'ev-assume')}</div></div></div>
   </details>`;
 }
@@ -1349,6 +1475,7 @@ SV['results.latest'] = () => {
     <div class="row">${r.qc.valid ? catBadge(st, false, true) : '<span class="cat cat-invalid big">✕ Invalid test</span>'}</div>
     <h3 class="headline" style="margin-top:10px">${esc(resultHeadline(r))}</h3>
     <p class="why">${esc(resultSummary(r))}</p>
+    ${r.day >= 1 && symptomaticNear(a, r.day).length ? `<div class="notice warn"><b>Symptoms reported</b><span>${esc(symptomText(symptomaticNear(a, r.day).pop()))}. This molecular panel cannot exclude urinary or other causes such as a urinary tract infection — a urine test may be needed. Symptoms are never dismissed because results are stable.</span></div>` : ''}
     ${r.day >= 1 ? `<h4>Key findings</h4><div class="findings">${FIND_DOMAINS.map(([n, ks]) => { const [l, d, c] = domainFinding(r, ks); return `<div class="finding ${c}"><div class="small muted">${esc(n)}</div><b>${esc(l)}</b><div class="tiny dim">${esc(d)}</div></div>`; }).join('')}</div>` : ''}
     <div class="actionbox"><div class="eyebrow">Recommended action</div><div>${esc(actionText(r, a))}</div></div>
   </div>
@@ -1403,6 +1530,8 @@ SV['review.tasks'] = () => {
   <div class="card span2"><h3>Alerts &amp; open tasks</h3>${tasks.length ? tasks.map(t => `<div class="taskitem"><span aria-hidden="true">${TASK_ICON[t.type] || '•'}</span><div><div>${esc(t.text)}</div><div class="tiny dim">${t.day != null ? 'Mission Day ' + t.day + ' · ' : ''}${esc(ruleGroup(t.rule))} ${ruleTag(t.rule)}</div></div></div>`).join('') : '<p class="muted">No open alerts.</p>'}
     <details class="section" style="margin-top:12px"><summary>Decision-engine log (most recent 20)</summary><ul class="loglist">${E.log.filter(e => e.day >= -1).slice(-20).reverse().map(e => `<li><span class="mono small dim">Day ${e.day}</span><span>${ruleTag(e.rule)}</span><span class="small">${esc(e.msg)}</span></li>`).join('')}</ul></details></div>
   <div class="card"><h3>Current status</h3>${catBadge(E.state, E.urgent)} <span class="small dim">(${esc(E.state)})</span><dl class="kv small" style="margin-top:10px"><dt>Regimen</dt><dd>${esc(a.regimen)}</dd><dt>Age band</dt><dd>${esc(a.ageBand)}</dd><dt>History</dt><dd>${esc(a.history)}</dd><dt>Antibiotics</dt><dd>${esc(a.abx)}</dd><dt>Pregnancy</dt><dd>${esc(a.pregnancy)}</dd><dt>Baseline</dt><dd>${esc(baselineStatus(a, E).label)}</dd></dl><div class="row" style="margin-top:10px"><button class="btn sm" data-act="go" data-v="results" data-s="latest">Latest result</button><button class="btn sm" data-act="go" data-v="results" data-s="trends">Trends</button></div></div>
+  ${a.checkins.some(c => c.day > cd - 7 && c.day <= cd && hasAnySymptom(c)) ? `<div class="card spanall"><div class="notice warn" style="margin:0"><b>Symptoms in the last 7 days</b><span>Urinary or other causes (e.g., a urinary tract infection) cannot be excluded by this molecular panel. Consider condition-specific testing below.</span></div></div>` : ''}
+  <div class="card spanall"><h3>Diagnostic pathways</h3>${dataTable(['Suspected condition', 'Further assessment'], [['Bacterial vaginosis', 'Amsel criteria, Nugent score or a validated BV molecular test'], ['Vaginal yeast infection', 'Microscopy, culture or appropriately validated molecular testing'], ['Urinary tract infection', 'Urinalysis and urine culture'], ['Other vaginal infections', 'Relevant pathogen-specific testing']], 'Condition-specific diagnostic pathways (§11.4)')}<p class="small" style="margin-top:8px"><b>PCR positivity after treatment is not automatically treatment failure.</b> Interpretation follows the assay's validated use and the clinician's assessment.</p></div>
   <div class="card span2"><h3>Record clinical decision</h3><form data-form="decision"><div class="formgrid">
     <label class="f" style="grid-column:1/-1">Clinical assessment<textarea name="assessment" placeholder="Symptoms, examination and history reviewed…" required></textarea></label>
     <label class="f">Disposition<select name="disposition"><option value="stable">Return to routine surveillance</option><option value="monitor">Continue increased monitoring</option><option value="review">Remain in Clinical Review</option></select></label>
@@ -1425,11 +1554,14 @@ SV['review.baseline'] = () => {
   return `<div class="pagehead"><div><h2>Baseline management</h2><p class="sub">${esc(a.code)} · each astronaut is compared only with her own pre-flight reference profile.</p></div></div>
   <div class="card"><div class="blsteps">${steps.map(([k, l, d], i) => `<div class="blstep ${i < idx ? 'done' : i === idx ? 'on' : ''}"><b>${l}</b><div class="tiny">${esc(d)}</div></div>`).join('')}</div>
     ${E.stale ? `<div class="notice warn" style="margin-top:12px"><b>Flagged for review</b><span>${esc(E.staleReason)}. The original profile is preserved; replacing it requires your recorded decision.</span></div>` : ''}
-    <div class="notice info" style="margin-top:12px"><b>Uncertainty</b><span>A baseline of ${App.cfg.baselineMin}–${Math.ceil(App.cfg.baselineMin * 1.5) - 1} observations gives wide, uncertain prediction limits. The ${App.cfg.baselineMin}-observation minimum is a prototype assumption and does not establish a reliable clinical reference range.</span></div>
+    <div class="notice info" style="margin-top:12px"><b>Uncertainty</b><span>A baseline of ${App.cfg.baselineMin}–${Math.ceil(App.cfg.baselineMin * App.cfg.provisionalMult) - 1} observations gives wide, uncertain prediction limits. The ${App.cfg.baselineMin}-observation minimum is a prototype assumption and does not establish a reliable clinical reference range.</span></div>
     <p class="small muted">Computed from ${bl.nSamples} pre-flight samples (${bl.nValidRuns} valid runs) · assay ${esc((bl.assays || []).join(', ') || '—')}. ${bl.nSufficient} of ${TARGETS.length} targets have enough valid quantitative observations. ${act ? `Active profile approved by ${esc(E.approval.by)} on day ${E.approval.day}.` : ''} Flight data are never absorbed into the baseline.</p>
     ${bl.warnings.map(w => `<div class="notice warn"><b>Review</b><span>${esc(w)}</span></div>`).join('')}
     ${dataTable(['Target', 'n valid', 'Mean log10', 'SD', 'Range', 'Detected', 'Status', ...(act ? ['Approved mean / SD / n'] : [])], TARGETS.map(t => { const b = bl.targets[t.key], o = act && act.targets[t.key]; return [t.name, b.n, fmt(b.mean), fmt(b.sd), b.n ? fmt(b.min) + ' – ' + fmt(b.max) : '—', Math.round(b.detFrac * 100) + '%', b.sufficient ? (b.provisional ? '<span class="qc-blq">Usable · small sample</span>' : '<span class="qc-valid">Usable</span>') + (b.highVar ? ' <span class="qc-qcfail">high variability</span>' : '') : '<span class="qc-nd">Insufficient — qualitative only</span>', ...(act ? [o ? `${fmt(o.mean)} / ${fmt(o.sd)} / ${o.n}` : '—'] : [])]; }))}
-    <div class="row" style="margin-top:12px"><button class="btn pri" data-act="approvebl" ${bl.nSufficient ? '' : 'disabled'}>${act ? 'Approve replacement baseline' : 'Approve baseline'}</button>${E.stale ? '<button class="btn" data-act="keepbl">Keep existing baseline</button>' : ''}${bl.nSamples < 8 ? '<button class="btn" data-act="simbaseline">Simulate pre-flight collection (8 samples)</button>' : ''}<span class="tiny dim">Re-baselining is never automatic (R10).</span></div></div>`;
+    <div class="row" style="margin-top:12px"><button class="btn pri" data-act="approvebl" ${bl.nSufficient ? '' : 'disabled'}>${act ? 'Approve replacement baseline' : 'Approve baseline'}</button>${E.stale ? '<button class="btn" data-act="keepbl">Keep existing baseline</button>' : ''}${bl.nSamples < 8 ? '<button class="btn" data-act="simbaseline">Simulate pre-flight collection (8 samples)</button>' : ''}<span class="tiny dim">Re-baselining is never automatic (R10).</span></div>
+    <form data-form="rejectbl" class="rejectbox"><label class="f" style="flex:1;min-width:260px">Reason for rejecting this ${act ? 'replacement ' : ''}baseline <span class="dim">(required)</span><input type="text" name="reason" required minlength="3" placeholder="e.g. too variable across cycle phases; collect more samples"></label><button class="btn warn" type="submit" ${bl.nSamples ? '' : 'disabled'}>Reject baseline</button></form></div>
+  <div class="card" style="margin-top:16px"><h3>Baseline samples &amp; context</h3>${dataTable(['Day', 'QC', 'Assay / lot', 'Cycle phase', 'Hormonal / medication context', 'pH'], (bl.samples || []).map(x => [x.day, x.valid ? '<span class="qc-valid">Valid</span>' : '<span class="qc-qcfail">Invalid</span>', esc(x.assay + ' / ' + x.lot), esc(x.cycle), esc(x.meds || (a.regimen ? 'Regimen: ' + a.regimen : '—')), x.ph != null ? fmt(x.ph, 1) : '—']), 'Pre-flight baseline samples with cycle phase and medication context')}<p class="tiny dim" style="margin-top:6px">Stored with each sample and in the approved baseline snapshot, so a reviewer can see which cycle phases and medication context the reference profile covers.</p></div>
+  ${a.reviews.filter(r => /^baseline-/.test(r.type)).length ? `<div class="card" style="margin-top:16px"><h3>Baseline decisions</h3>${dataTable(['Day', 'Decision', 'By', 'Reason / note'], a.reviews.filter(r => /^baseline-/.test(r.type)).slice().reverse().map(r => [r.day, esc({ 'baseline-approve': 'Approved', 'baseline-reject': 'Rejected', 'baseline-keep': 'Kept existing' }[r.type]), esc(r.by), esc(r.reason || r.notes || '—')]), 'Recorded baseline decisions')}</div>` : ''}`;
 };
 SV['review.profiles'] = () => {
   const rev = App.role === 'reviewer';
@@ -1463,14 +1595,14 @@ function handoffReport(a, E) {
 /* =====================================================================
    LEVEL 3 — RESEARCH
    ===================================================================== */
-const DICT = [['sample_id', 'Pseudonymous sample identifier'], ['subject_code', 'Coded astronaut identifier (pseudonymization, not anonymity)'], ['mission_day', 'Day relative to launch (negative = pre-flight baseline)'], ['collection_date', 'Calendar date (only if enabled; re-identification risk)'], ['phase', 'baseline | flight'], ['sample_type', 'Vaginal swab (simulated)'], ['assay_id', 'Assay identifier'], ['calibration_lot', 'Cartridge/calibration lot'], ['target', 'Microbial target code'], ['qc_status', 'valid | blq | nd | qcfail | missing'], ['cq', 'Original Cq/Ct'], ['log10_copies', 'Calibrated abundance, log10 copies/reaction (null for non-detects — never zero)'], ['lod_log10 / loq_log10', 'Detection & quantification limits'], ['curve_m / curve_b', 'Standard-curve slope and intercept'], ['run_qc', 'pass | fail with reasons'], ['ph', 'Vaginal pH (supplementary)'], ['cycle_phase', 'Cycle metadata (only where consent/protocol permits)'], ['medication_context', 'Only where approved'], ['simulated', 'true for all hackathon records']];
+const DICT = [['sample_id', 'Pseudonymous sample identifier'], ['subject_code', 'Coded astronaut identifier (pseudonymization, not anonymity)'], ['mission_day', 'Day relative to launch (negative = pre-flight baseline)'], ['collection_date', 'Calendar date (only if enabled; re-identification risk)'], ['phase', 'baseline | flight'], ['sample_type', 'Vaginal swab (simulated)'], ['assay_id', 'Assay identifier'], ['calibration_lot', 'Cartridge/calibration lot'], ['target', 'Microbial target code'], ['qc_status', 'valid | blq | nd | qcfail | missing'], ['cq', 'Original Cq/Ct'], ['log10_copies', 'Calibrated abundance, log10 copies/reaction (null for non-detects — never zero)'], ['lod_log10 / loq_log10', 'Detection & quantification limits'], ['curve_m / curve_b / curve_source', 'Standard-curve slope and intercept actually used (calibration lot or run-specific)'], ['cartridge_id', 'Cartridge identifier entered at test time'], ['collection_checklist', 'Collection steps ticked / total'], ['run_qc', 'pass | fail with reasons'], ['ph', 'Vaginal pH (supplementary)'], ['cycle_phase', 'Cycle metadata (only where consent/protocol permits)'], ['medication_context', 'Only where approved'], ['simulated', 'true for all hackathon records']];
 function buildArchive(opts) {
   const sel = opts.scope === 'all' ? ids() : [App.sel]; const samples = [], meas = [], assays = {};
   sel.forEach(id => { const a = App.astros[id]; a.tests.forEach(t => { const q = qcTest(t, App.cfg); const ck = a.checkins.filter(c => c.day === t.day).slice(-1)[0];
-    const s = { sample_id: 'S-' + hashStr(t.id).toString(36).toUpperCase(), subject_code: a.code, mission_day: t.day, phase: t.day < 0 ? 'baseline' : 'flight', sample_type: 'vaginal swab (simulated)', assay_id: t.assay, calibration_lot: t.lot, run_qc: q.valid ? 'pass' : 'fail: ' + q.reasons.join(' '), hsc_cq: num(t.hscCq), iac: t.iac, ntc: t.ntc, pc: t.pc, ph: ck ? ck.ph : null, simulated: !!a.simulated, source: t.source };
-    if (opts.dates) s.collection_date = dateOf(a, t.day); if (opts.cycle && ck) s.cycle_phase = ck.cycle; if (opts.meds && ck) s.medication_context = ck.meds || null; samples.push(s);
+    const s = { sample_id: 'S-' + hashStr(t.id).toString(36).toUpperCase(), subject_code: a.code, mission_day: t.day, phase: t.day < 0 ? 'baseline' : 'flight', sample_type: 'vaginal swab (simulated)', assay_id: t.assay, calibration_lot: t.lot, run_qc: q.valid ? 'pass' : 'fail: ' + q.reasons.join(' '), cartridge_id: t.cartridgeId || null, collection_checklist: t.checklist ? t.checklist.filter(Boolean).length + '/' + t.checklist.length : null, hsc_cq: num(t.hscCq), iac: t.iac, ntc: t.ntc, pc: t.pc, ph: ck ? ck.ph : null, simulated: !!a.simulated, source: t.source };
+    if (opts.dates) s.collection_date = t.date || dateOf(a, t.day); if (opts.cycle && (t.cycle || ck)) s.cycle_phase = t.cycle || ck.cycle; if (opts.meds && (t.meds || ck)) s.medication_context = t.meds || (ck && ck.meds) || null; samples.push(s);
     const lot = ASSAYS[t.assay] && ASSAYS[t.assay].lots[t.lot]; if (lot) assays[t.assay + '/' + t.lot] = { assay_id: t.assay, label: ASSAYS[t.assay].label, calibration_lot: t.lot, units: ASSAYS[t.assay].units, hsc_max_cq: lot.hsc.maxCq, curves: lot.curves, simulated: true };
-    TARGETS.forEach(tg => { const o = q.targets[tg.key]; const c = lot && lot.curves[tg.key]; meas.push({ sample_id: s.sample_id, target: tg.key, target_name: tg.full, qc_status: o.status, cq: o.cq, log10_copies: o.x, lod_log10: c ? c.lod : null, loq_log10: c ? c.loq : null, curve_m: c ? c.m : null, curve_b: c ? c.b : null }); }); }); });
+    TARGETS.forEach(tg => { const o = q.targets[tg.key]; const c = lot && lot.curves[tg.key]; meas.push({ sample_id: s.sample_id, target: tg.key, target_name: tg.full, qc_status: o.status, cq: o.cq, log10_copies: o.x, lod_log10: c ? c.lod : null, loq_log10: c ? c.loq : null, curve_m: o.m ?? (c ? c.m : null), curve_b: o.b ?? (c ? c.b : null), curve_source: o.runCurve ? 'run-specific' : 'calibration lot' }); }); }); });
   return { study: { title: 'BIOME simulated longitudinal vaginal microbiome monitoring (hackathon prototype)', description: 'SIMULATED records generated for NASA Space Apps Challenge 2026. Not a real scientific dataset; not NASA measurements.', osdr_note: 'Organized with OSDR study/sample/assay metadata in mind. No automatic submission; real contribution requires an approved study, consent, de-identification and OSDR curation.', subjects: sel.length, simulated: true }, samples, assays: Object.values(assays), measurements: meas, dataDictionary: Object.fromEntries(DICT), provenance: { software: 'BIOME', version: VERSION, configurationVersion: App.meta.cfgVersion, exportedAt: new Date().toISOString(), engines: 'analytical (QC, calibration, Student t prediction limits, Holm) · pattern interpretation · decision rules R0–R10', excluded: ['free-text notes', 'names (never stored)', ...(opts.dates ? [] : ['calendar dates']), ...(opts.meds ? [] : ['medication context'])] } };
 }
 function toCSV(arc) { const sm = Object.fromEntries(arc.samples.map(s => [s.sample_id, s])); const cols = ['sample_id', 'subject_code', 'mission_day', ...(App.archiveOpts.dates ? ['collection_date'] : []), 'phase', 'assay_id', 'calibration_lot', 'run_qc', 'target', 'qc_status', 'cq', 'log10_copies', 'lod_log10', 'loq_log10', 'curve_m', 'curve_b', 'ph', ...(App.archiveOpts.cycle ? ['cycle_phase'] : []), ...(App.archiveOpts.meds ? ['medication_context'] : []), 'simulated'];
@@ -1518,14 +1650,17 @@ SV['research.bench'] = () => {
 /* =====================================================================
    LEVEL 3 — METHODS
    ===================================================================== */
-const EVIDENCE = [['Individual prediction interval', "Student's t prediction interval", 'Statistical method', 'ev-stat', 'Prediction-interval method; assumptions documented'], ['Statistical significance', 'Two-sided 0.05', 'Statistical convention', 'ev-stat', 'Conventional level; Holm (1979)'], ['Multiple-target adjustment', 'Holm step-down', 'Published statistical method', 'ev-stat', 'Holm (1979)'], ['Baseline minimum', '6 valid observations per target', 'Prototype assumption', 'ev-assume', 'No validated vaginal-microbiome minimum established'], ['Log10 abundance', 'Assay-specific calibrated copies', 'Measurement method', 'ev-stat', 'MIQE 2.0 (Bustin et al., 2025)'], ['Assay compatibility', 'Comparisons only within the baseline assay (lots converted by their own calibration)', 'Design safeguard', 'ev-stat', 'MIQE 2.0; validated conversion required otherwise'], ['RCV method', 'Analytical + within-person variation', 'Published statistical method', 'ev-stat', 'Fraser (2011) — documented, not combined with prediction limits'], ['BV pH criterion', 'Above 4.5', 'Published clinical criterion', 'ev-pub', 'CDC BV guidelines'], ['Amsel diagnosis', '≥ 3 of 4 criteria', 'Published clinical criterion', 'ev-pub', 'CDC BV guidelines'], ['Nugent categories', '0–3, 4–6, 7–10', 'Published clinical criterion', 'ev-pub', 'CDC BV guidelines'], ['Candida asymptomatic carriage', '≈ 10–20%', 'Published clinical estimate', 'ev-pub', 'CDC VVC guidelines'], ['Hilbert G. vaginalis cutoff', '1.10 × 10^5 copies/reaction', 'Assay-specific published cutoff', 'ev-pub', 'Hilbert et al. (2016) — not transferred'], ['Hilbert A. vaginae cutoff', '1.10 × 10^5 copies/reaction', 'Assay-specific published cutoff', 'ev-pub', 'Hilbert et al. (2016) — not transferred'], ['Hilbert BVAB2 cutoff', '1.00 × 10^3 copies/reaction', 'Assay-specific published cutoff', 'ev-pub', 'Hilbert et al. (2016) — not transferred'], ['Hilbert BIC model', '0.20 predicted probability (sens 91.8%, spec 95.3%)', 'Assay-specific published result', 'ev-pub', 'Hilbert et al. (2016) — reference only'], ['BV-like pattern rule', '≥ 2 elevated BV-associated + ≥ 1 reduced protective Lactobacillus', 'Provisional engineering heuristic', 'ev-assume', 'Requires prospective validation'], ['Confirmation rule', 'Same target, same direction, on a subsequent valid test', 'Operational safeguard', 'ev-assume', 'Not a clinical definition of persistent infection'], ['Symptom escalation', 'Placeholder triage policy', 'Prototype assumption', 'ev-assume', 'To be replaced by medically approved mission rules'], ['Routine / initial / Watch / Monitor intervals', '14 d / 7 d / 48 h / 3 d', 'Prototype operational default', 'ev-assume', 'Not validated clinical intervals'], ['Invalid sample repeat', 'Following day', 'Prototype operational default', 'ev-assume', 'Logistics assumption'], ['Benchmark schedules', '3, 7, 14 days', 'Simulation configuration', 'ev-sim', 'Comparative settings, not clinical standards'], ['Benchmark run count', '100 simulated missions', 'Simulation configuration', 'ev-sim', 'Demonstration setting'], ['Symptom scale', 'None / Mild / Moderate / Severe', 'User-interface design', 'ev-assume', 'Descriptive self-report, not a validated scale'], ['Assay calibration (BIOME-SIM-01/02)', 'Hypothetical m, b, LOD, LOQ', 'Simulation configuration', 'ev-sim', 'Requires independent assay validation']];
-const LIMITS = ['Holm correction controls multiple comparisons within one panel; it does not control the accumulation of false positives across repeated tests during a mission (quantified in the benchmark instead).', 'A baseline of six observations gives highly uncertain prediction limits; six is a prototype assumption, not a reliable clinical reference range.', 'Long-duration vaginal microbiome data from spaceflight remain limited.', 'The 2026 parabolic-flight study involved only four women and does not establish that its observed changes cause disease or persist in orbit.', 'Vaginal microbiome composition varies naturally within individuals and across cycle phases.', 'Published clinical BV qPCR cutoffs are assay-specific and are not transferred to the proposed panel.', 'CDC guidance does not establish asymptomatic BV NAAT results as a validated basis for diagnosis.', 'The provisional BV-like pattern rule is not a validated clinical diagnostic model.', 'Confirmation on a repeat test is an operational safeguard, not a clinical definition of persistent infection.', 'Symptom-escalation criteria are configurable placeholders for medically approved mission rules.', 'Measurements from a different assay are not compared with a baseline without a validated conversion.', 'The monitoring schedule has not been validated for operational astronaut healthcare.', 'BIOME does not independently diagnose or prescribe treatment.', 'The proposed physical testing system is not qualified for microgravity.', 'The research archive prepares data for potential future submission — not automatic NASA OSDR submission.', 'Local browser storage is not a certified medical-record security system.', 'Simulated trajectories cannot establish real-world clinical sensitivity, specificity or patient outcomes.'];
-const REFS = [['Gimunová M., et al. (2024). The effect of space travel on human reproductive health: a systematic review. npj Microgravity 10, 10.', 'https://doi.org/10.1038/s41526-024-00351-1'], ['Farrell R. M., et al. (2025). A moonshot for female astronaut health, a win for all astronauts and space exploration. npj Microgravity 11, 38.', 'https://doi.org/10.1038/s41526-025-00495-8'], ['NASA. Risk of Host–Microorganism Interactions.', 'https://www.nasa.gov/reference/risk-of-host-microorganism-interactions/'], ['Mathyk B. A., et al. (2026). Parabolic flight induces site specific microbiome changes in women. Frontiers in Microbiology 17, 1817099.', 'https://doi.org/10.3389/fmicb.2026.1817099'], ['Gajer P., et al. (2012). Temporal Dynamics of the Human Vaginal Microbiota. Sci Transl Med 4(132), 132ra52.', 'https://doi.org/10.1126/scitranslmed.3003605'], ['NASA Space Apps Challenge (2026). Create Health Monitoring Software for Astronauts on Space Missions.', 'https://www.spaceappschallenge.org/2026/challenges/health-monitoring-software/'], ['NASA. OSDR Guidelines for Data Submission.', 'https://www.nasa.gov/reference/osdr-help-tutorials-guidelines-for-data-submission-to-osdr/'], ['NASA. OSDR Frequently Asked Questions.', 'https://science.nasa.gov/reference/osdr-faq/'], ['Bustin S. A., et al. (2025). MIQE 2.0. Clinical Chemistry 71(6), 634–651.', 'https://doi.org/10.1093/clinchem/hvaf043'], ['Hilbert D. W., et al. (2016). Development and Validation of a Highly Accurate Quantitative Real-Time PCR Assay for Diagnosis of Bacterial Vaginosis. J Clin Microbiol 54(4), 1017–1024.', 'https://doi.org/10.1128/JCM.03104-15'], ['CDC. Bacterial Vaginosis — STI Treatment Guidelines.', 'https://www.cdc.gov/std/treatment-guidelines/bv.htm'], ['CDC. Vulvovaginal Candidiasis — STI Treatment Guidelines.', 'https://www.cdc.gov/std/treatment-guidelines/candidiasis.htm'], ['Fraser C. G. (2011). Reference change values. Clin Chem Lab Med 50(5), 807–812.', 'https://doi.org/10.1515/CCLM.2011.733'], ['Holm S. (1979). A Simple Sequentially Rejective Multiple Test Procedure. Scand J Stat 6(2), 65–70.', null]];
+const EVIDENCE = [['Individual prediction interval', "Student's t prediction interval", 'Statistical method', 'ev-stat', 'Prediction-interval method; assumptions documented'], ['Statistical significance', 'Two-sided 0.05', 'Statistical convention', 'ev-stat', 'Conventional level; Holm (1979)'], ['Multiple-target adjustment', 'Holm step-down', 'Published statistical method', 'ev-stat', 'Holm (1979)'], ['Baseline minimum', '6 valid observations per target', 'Prototype assumption', 'ev-assume', 'No validated vaginal-microbiome minimum established'], ['Log10 abundance', 'Assay-specific calibrated copies', 'Measurement method', 'ev-stat', 'MIQE 2.0 (Bustin et al., 2025)'], ['Assay compatibility', 'Comparisons only within the baseline assay (lots converted by their own calibration)', 'Design safeguard', 'ev-stat', 'MIQE 2.0; validated conversion required otherwise'], ['RCV method', 'Analytical + within-person variation', 'Published statistical method', 'ev-stat', 'Fraser (2011) — documented, not combined with prediction limits'], ['BV pH criterion', 'Above 4.5', 'Published clinical criterion', 'ev-pub', 'CDC BV guidelines'], ['Amsel diagnosis', '≥ 3 of 4 criteria', 'Published clinical criterion', 'ev-pub', 'CDC BV guidelines'], ['Nugent categories', '0–3, 4–6, 7–10', 'Published clinical criterion', 'ev-pub', 'CDC BV guidelines'], ['Candida asymptomatic carriage', '≈ 10–20%', 'Published clinical estimate', 'ev-pub', 'CDC VVC guidelines'], ['Hilbert G. vaginalis cutoff', '1.10 × 10^5 copies/reaction', 'Assay-specific published cutoff', 'ev-pub', 'Hilbert et al. (2016) — not transferred'], ['Hilbert A. vaginae cutoff', '1.10 × 10^5 copies/reaction', 'Assay-specific published cutoff', 'ev-pub', 'Hilbert et al. (2016) — not transferred'], ['Hilbert BVAB2 cutoff', '1.00 × 10^3 copies/reaction', 'Assay-specific published cutoff', 'ev-pub', 'Hilbert et al. (2016) — not transferred'], ['Hilbert combined G. vaginalis + A. vaginae + BVAB2 cutoff', '1.17 × 10^6 copies/reaction', 'Assay-specific published cutoff', 'ev-pub', 'Hilbert et al. (2016) — not transferred'], ['Hilbert BIC model cutoff', '0.20 predicted probability', 'Assay-specific published cutoff', 'ev-pub', 'Hilbert et al. (2016) — reference only'], ['Hilbert BIC sensitivity', '91.8%', 'Published study result', 'ev-pub', 'Hilbert et al. (2016)'], ['Hilbert BIC specificity', '95.3%', 'Published study result', 'ev-pub', 'Hilbert et al. (2016)'], ['BV-like pattern rule', '≥ 2 elevated BV-associated + ≥ 1 reduced protective Lactobacillus', 'Provisional engineering heuristic', 'ev-assume', 'Requires prospective validation'], ['Confirmation rule', 'Same target, same direction, on a subsequent valid test', 'Operational safeguard', 'ev-assume', 'Not a clinical definition of persistent infection'], ['Symptom escalation', 'Placeholder triage policy', 'Prototype assumption', 'ev-assume', 'To be replaced by medically approved mission rules'], ['Routine / initial / Watch / Monitor intervals', '14 d / 7 d / 48 h / 3 d', 'Prototype operational default', 'ev-assume', 'Not validated clinical intervals'], ['Invalid sample repeat', 'Following day', 'Prototype operational default', 'ev-assume', 'Logistics assumption'], ['Benchmark schedules', '3, 7, 14 days', 'Simulation configuration', 'ev-sim', 'Comparative settings, not clinical standards'], ['Benchmark run count', '100 simulated missions', 'Simulation configuration', 'ev-sim', 'Demonstration setting'], ['Symptom scale', 'None / Mild / Moderate / Severe', 'User-interface design', 'ev-assume', 'Descriptive self-report, not a validated scale'], ['Assay calibration (BIOME-SIM-01/02)', 'Hypothetical m, b per lot; run-specific m, b may be entered', 'Simulation configuration', 'ev-sim', 'Requires independent assay validation'],
+  ['Limit of detection (all simulated targets)', 'LOD 1.3 log10 copies/reaction', 'Assay-specific (simulated, hypothetical)', 'ev-sim', 'Placeholder until assay validation (MIQE 2.0)'], ['Limit of quantification (all simulated targets)', 'LOQ 2.0 log10 copies/reaction', 'Assay-specific (simulated, hypothetical)', 'ev-sim', 'Placeholder until assay validation (MIQE 2.0)'], ['Upper limit of quantification', 'ULOQ 9.5 log10 copies/reaction', 'Assay-specific (simulated, hypothetical)', 'ev-sim', 'Placeholder until assay validation'], ['Human sample control acceptance', 'Cq ≤ 32 (BIOME-SIM-01) · Cq ≤ 31 (BIOME-SIM-02)', 'Assay-specific (simulated, hypothetical)', 'ev-sim', 'Placeholder until assay validation'], ['Cq vs entered-abundance tolerance', '0.3 log10', 'Prototype assumption', 'ev-assume', 'Configurable (Advanced settings)'],
+  ['Small-sample (provisional) flag', 'n < minimum × 1.5', 'Prototype assumption', 'ev-assume', 'Configurable; display label only'], ['Symptom–test linking window', '1 day', 'Prototype assumption', 'ev-assume', 'Configurable; used by R5/R7'], ['BV-like confirmation streak for review flag', '2 consecutive valid tests', 'Provisional engineering heuristic', 'ev-assume', 'Configurable; R4'], ['Detection-fraction cutoff for qualitative transitions', '50% of valid baseline runs', 'Prototype assumption', 'ev-assume', 'Configurable; labels only'], ['Baseline high-variability warning', 'SD > 0.6 log10', 'Prototype assumption', 'ev-assume', 'Configurable; warning only'], ['Urinary symptom item', 'None / Mild / Moderate / Severe; referral only', 'User-interface design', 'ev-assume', 'Never scored; never alters qPCR pattern logic']];
+const LIMITS = ['The molecular panel does not assess urinary tract infection; urinary symptoms are recorded for referral only.', 'Individual prediction limits require adequate repeated baseline observations and reliable assay-performance data.', 'Holm correction controls multiple comparisons within one panel; it does not control the accumulation of false positives across repeated tests during a mission (quantified in the benchmark instead).', 'A baseline of six observations gives highly uncertain prediction limits; six is a prototype assumption, not a reliable clinical reference range.', 'Long-duration vaginal microbiome data from spaceflight remain limited.', 'The 2026 parabolic-flight study involved only four women and does not establish that its observed changes cause disease or persist in orbit.', 'Vaginal microbiome composition varies naturally within individuals and across cycle phases.', 'Published clinical BV qPCR cutoffs are assay-specific and are not transferred to the proposed panel.', 'CDC guidance does not establish asymptomatic BV NAAT results as a validated basis for diagnosis.', 'The provisional BV-like pattern rule is not a validated clinical diagnostic model.', 'Confirmation on a repeat test is an operational safeguard, not a clinical definition of persistent infection.', 'Symptom-escalation criteria are configurable placeholders for medically approved mission rules.', 'Measurements from a different assay are not compared with a baseline without a validated conversion.', 'The monitoring schedule has not been validated for operational astronaut healthcare.', 'BIOME does not independently diagnose or prescribe treatment.', 'The proposed physical testing system is not qualified for microgravity.', 'The research archive prepares data for potential future submission — not automatic NASA OSDR submission.', 'Local browser storage is not a certified medical-record security system.', 'Simulated trajectories cannot establish real-world clinical sensitivity, specificity or patient outcomes.'];
+const REFS = [['Gimunová M., et al. (2024). The effect of space travel on human reproductive health: a systematic review. npj Microgravity 10, 10.', 'https://doi.org/10.1038/s41526-024-00351-1'], ['Farrell R. M., et al. (2025). A moonshot for female astronaut health, a win for all astronauts and space exploration. npj Microgravity 11, 38.', 'https://doi.org/10.1038/s41526-025-00495-8'], ['NASA. Risk of Host–Microorganism Interactions.', 'https://www.nasa.gov/reference/risk-of-host-microorganism-interactions/'], ['Mathyk B. A., et al. (2026). Parabolic flight induces site specific microbiome changes in women. Frontiers in Microbiology 17, 1817099.', 'https://doi.org/10.3389/fmicb.2026.1817099'], ['Gajer P., et al. (2012). Temporal Dynamics of the Human Vaginal Microbiota. Sci Transl Med 4(132), 132ra52.', 'https://doi.org/10.1126/scitranslmed.3003605'], ['NASA Space Apps Challenge (2026). Create Health Monitoring Software for Astronauts on Space Missions.', 'https://www.spaceappschallenge.org/2026/challenges/health-monitoring-software/'], ['NASA. OSDR Guidelines for Data Submission.', 'https://www.nasa.gov/reference/osdr-help-tutorials-guidelines-for-data-submission-to-osdr/'], ['NASA. OSDR Frequently Asked Questions.', 'https://science.nasa.gov/reference/osdr-faq/'], ['Bustin S. A., et al. (2025). MIQE 2.0. Clinical Chemistry 71(6), 634–651.', 'https://doi.org/10.1093/clinchem/hvaf043'], ['Hilbert D. W., et al. (2016). Development and Validation of a Highly Accurate Quantitative Real-Time PCR Assay for Diagnosis of Bacterial Vaginosis. J Clin Microbiol 54(4), 1017–1024.', 'https://doi.org/10.1128/JCM.03104-15'], ['CDC. Bacterial Vaginosis — STI Treatment Guidelines.', 'https://www.cdc.gov/std/treatment-guidelines/bv.htm'], ['CDC. Vulvovaginal Candidiasis — STI Treatment Guidelines.', 'https://www.cdc.gov/std/treatment-guidelines/candidiasis.htm'], ['Fraser C. G. (2011). Reference change values. Clin Chem Lab Med 50(5), 807–812.', 'https://doi.org/10.1515/CCLM.2011.733'], ['Holm S. (1979). A Simple Sequentially Rejective Multiple Test Procedure. Scand J Stat 6(2), 65–70.', null], ['Reyes D. P., Masterova K. S., Walton M., Kerstman E. L., Antonsen E. L. (2022). Assessment of Sex-Dependent Medical Outcomes During Spaceflight. Journal of Women\'s Health.', 'https://doi.org/10.1089/jwh.2021.0636'], ['NASA. Human Research Roadmap.', 'https://humanresearchroadmap.nasa.gov/'], ['NASA. Human Research Program.', 'https://www.nasa.gov/hrp/']];
 SV['methods.overview'] = () => `<div class="pagehead"><div><h2>How BIOME works</h2><p class="sub">Three separate engines. A statistical deviation never becomes a clinical recommendation on its own — it has to pass through pattern interpretation and explicit decision rules.</p></div></div>
   <div class="engines">${[['1', 'Analytical engine', ['Quality control (NTC, positive control, human sample control, internal amplification control)', 'Lot-specific Cq → log10 calibration', 'Detection / quantification limits; non-detects never zero', 'Assay compatibility with the baseline', "Student's t prediction limits + Holm correction"]], ['2', 'Pattern interpretation engine', ['BV-associated patterns (provisional heuristic)', 'Lactobacillus enrichment treated as neutral', 'L. iners tracked separately', 'Separate Candida pathway', 'Symptom and pH context']], ['3', 'Decision engine', ['Monitoring state (Baseline → Stable → Watch → Monitor → Clinical Review)', 'Urgent overlay (independent of qPCR)', 'Rules R0–R10 with audit log', 'Next action and adaptive schedule', 'Cartridge accounting']]].map(([n, h, items], i) => `<div class="card engine"><div class="eyebrow">Engine ${n}</div><h3>${h}</h3><ul class="small">${items.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>${i < 2 ? '<div class="arrow" aria-hidden="true">→</div>' : ''}`).join('')}</div>
   <div class="grid g2" style="margin-top:16px">
   <div class="card"><h3>What users see vs. what the engine tracks</h3>${dataTable(['Shown to users', 'Internal states'], [[catBadge('Stable'), 'Baseline, Stable'], [catBadge('Watch'), 'Watch, Monitor'], [catBadge('Clinical Review'), 'Clinical Review'], ['<span class="cat cat-urgent"><span aria-hidden="true">⚠</span> Urgent</span>', 'Urgent overlay — separate, overrides everything']])}<p class="tiny dim" style="margin-top:6px">The exact internal state is always shown in detailed results.</p></div>
   <div class="card"><h3>Decision rules, grouped</h3>${dataTable(['Group', 'Rules'], RULE_GROUPS.slice(0, 4).map(([g, rs]) => [esc(g), rs.map(r => `${ruleTag(r)} <span class="small">${esc(RULES[r])}</span>`).join('<br>')]))}</div>
+  <div class="card spanall"><h3>Where each §13.1 screen lives <span class="pill">accepted deviation</span></h3><p class="small muted">The specification lists 11 top-level screens. After usability review they are grouped into 6 destinations by complexity level; every screen still exists. "Monitoring recommendations" is shown on the Dashboard (current) and Results → Latest result (per test) rather than as a separate destination.</p>${dataTable(['§13.1 screen', 'Location in the app'], [['Dashboard', 'Dashboard'], ['Astronaut profiles', 'Top-bar selector + Medical Review → Astronaut profiles'], ['Daily check-in', 'Health → Daily check-in'], ['Enter test results', 'Health → Enter test results'], ['Trends and analysis', 'Results → Trends'], ['Monitoring recommendations', 'Dashboard (next action) + Results → Latest result (recommended action) + Results → History'], ['Medical review and follow-up', 'Medical Review → Review tasks & follow-up / Baseline management'], ['Research archive', 'Research → Research archive'], ['Simulation and benchmarking', 'Research → Simulation & benchmarking'], ['NASA Research Context', 'Methods → NASA research context'], ['Methods, evidence and limitations', 'Methods → How BIOME works / Evidence register / Limitations / Self-tests / Advanced settings']], 'Mapping of specification §13.1 screens to app navigation')}</div>
   <div class="card spanall"><h3>Formulas &amp; assumptions</h3><div class="formula">Calibration:  log10(N) = (Cq − b) / m          [lot-specific m, b; validated linear range only]
 Baseline:     x̄ = Σxᵢ / n ;  s = √( Σ(xᵢ − x̄)² / (n − 1) )
 Prediction:   t = (x_new − x̄) / ( s · √(1 + 1/n) ),  df = n − 1 ;  p_raw = 2 · [1 − T_CDF(|t|, df)]
@@ -1534,17 +1669,25 @@ Holm:         reject p_(k) while p_(k) ≤ α / (m − k + 1)
 Fold change:  10^(x_new − x̄)
 RCV (ref.):   √2 · Z · √(CV_A² + CV_I²), Z = 1.96   [documented; not combined with prediction limits]</div>
   <p class="small muted">Assumes baseline measurements are representative, approximately independent, stable and approximately normal on the log10 scale. Raw Cq values are never compared as linear quantities; targets are never summed without validated normalization; censored values are never imputed for fold changes; analytical variation is not double-counted. Confirmation means the same target remains outside its limit in the same direction on a subsequent valid test — a different target becoming abnormal is a new signal, not confirmation.</p></div></div>`;
-SV['methods.evidence'] = () => `<div class="pagehead"><div><h2>Evidence register</h2><p class="sub">Every threshold, interval and statistical parameter, with its source or assumption status.</p></div></div><div class="card">${dataTable(['Parameter', 'Value or method', 'Classification', 'Source or justification'], EVIDENCE.map(([p, v, k, t, s]) => [esc(p), esc(v), evTag(k, t), esc(s)]))}<p class="small muted" style="margin-top:8px">Hilbert et al. (2016) values belong to that study's assays, units and population and are a comparison point only. The published BIC model is not implemented: it needs separately measured Megasphaera phylotypes 1 &amp; 2 and compatible copies-per-reaction data, and its published log-odds/odds notation requires independent verification.</p></div><div class="card" style="margin-top:16px"><h3>Simulation parameters</h3>${dataTable(['Parameter', 'Value', 'Classification'], SIM_PARAMS.map(([p, v, k]) => [esc(p), esc(v), evTag(k, /Evidence/.test(k) ? 'ev-pub' : /Calculated/.test(k) ? 'ev-stat' : 'ev-assume')]))}</div>`;
+SV['methods.evidence'] = () => `<div class="pagehead"><div><h2>Evidence register</h2><p class="sub">Every threshold, interval and statistical parameter, with its source or assumption status. Values that can be changed are listed in Advanced settings with the same classification.</p></div></div>
+  <div class="card" style="margin-bottom:16px"><h3>Published quantitative BV evidence — Hilbert et al. (2016)</h3><p class="small muted">385 vaginal specimens from 146 women; assay-specific qPCR model supporting diagnosis of symptomatic BV.</p>${dataTable(['Target or model', 'Published cutoff', 'Sensitivity', 'Specificity'], [['G. vaginalis', '1.10 × 10^5 copies/reaction', '83.6%', '84.1%'], ['A. vaginae', '1.10 × 10^5 copies/reaction', '87.1%', '90.7%'], ['BVAB2', '1.00 × 10^3 copies/reaction', '78.9%', '92.5%'], ['Combined G. vaginalis + A. vaginae + BVAB2', '1.17 × 10^6 copies/reaction', '91.2%', '93.0%'], ['BIC logistic-regression model', 'Predicted probability 0.20', '91.8%', '95.3%']], 'Hilbert et al. (2016) published cutoffs, sensitivity and specificity')}
+  <div class="notice warn" style="margin-top:10px"><b>Not transferable</b><span>These values belong to the specific assays, measurement units, population and diagnostic classification of that study. They are a scientific comparison point only and are not applied to BIOME's panel.</span></div>
+  <div class="notice warn"><b>BIC model</b><span>The model uses G. vaginalis, A. vaginae, Megasphaera phylotype 1 and Megasphaera phylotype 2. It cannot be calculated unless Megasphaera 1 and 2 are measured separately with compatible copies-per-reaction data.</span></div>
+  <div class="notice bad"><b>Notation warning</b><span>The paper describes the linear predictor as the natural log of the odds, then converts it to a probability as though it were the odds. Because of this log-odds vs odds inconsistency, the model must not be implemented from the paper's equation without independently verifying the original implementation.</span></div></div>
+  <div class="card">${dataTable(['Parameter', 'Value or method', 'Classification', 'Source or justification'], EVIDENCE.map(([p, v, k, t, s]) => [esc(p), esc(v), evTag(k, t), esc(s)]))}</div><div class="card" style="margin-top:16px"><h3>Simulation parameters</h3>${dataTable(['Parameter', 'Value', 'Classification'], SIM_PARAMS.map(([p, v, k]) => [esc(p), esc(v), evTag(k, /Evidence/.test(k) ? 'ev-pub' : /Calculated/.test(k) ? 'ev-stat' : 'ev-assume')]))}</div>`;
 SV['methods.nasa'] = () => `<div class="pagehead"><div><h2>NASA research context</h2><p class="sub">NASA Human Research Program material sets the spaceflight-health context. It is <b>not</b> a source of vaginal qPCR reference ranges or diagnostic thresholds.</p></div></div>
   <div class="notice warn"><b>Data source</b><span>The prototype uses simulated measurements. It does not use a NASA astronaut vaginal-qPCR dataset, and no synthetic value is labelled as a NASA measurement.</span></div>
   <div class="grid g3">
-   <div class="card span2"><h3>NASA's five hazards of human spaceflight</h3><div class="grid g2 small">${[['Space radiation', 'Whole-body physiological stress on long missions.'], ['Isolation & confinement', 'Limited privacy and medical resources — records are private by default.'], ['Distance from Earth', 'Delays and limited resupply — onboard analysis, offline use, cartridge management.'], ['Gravity fields', 'A 2026 parabolic-flight study observed vaginal microbiome changes in four women (Mathyk et al., 2026).'], ['Hostile & closed environments', 'Closed habitats change microbial exposure.']].map(([h, d]) => `<div class="card tight"><b>${h}</b><div class="muted">${d}</div></div>`).join('')}</div></div>
+   <div class="card span2"><h3>NASA's five hazards of human spaceflight <a class="small" style="font-weight:400" href="https://www.nasa.gov/humans-in-space/the-human-body-in-space/" target="_blank" rel="noopener">source ↗</a></h3><div class="grid g2 small">${[['Space radiation', 'Whole-body physiological stress on long missions.'], ['Isolation & confinement', 'Limited privacy and medical resources — records are private by default.'], ['Distance from Earth', 'Delays and limited resupply — onboard analysis, offline use, cartridge management.'], ['Gravity fields', 'A 2026 parabolic-flight study observed vaginal microbiome changes in four women (Mathyk et al., 2026).'], ['Hostile & closed environments', 'Closed habitats change microbial exposure.']].map(([h, d]) => `<div class="card tight"><b>${h}</b><div class="muted">${d}</div></div>`).join('')}</div></div>
    <div class="card"><h3>Host–microorganism interactions</h3><p class="small">NASA notes that microorganisms and microbial communities can change during spaceflight, while the health implications — and the relative roles of microbial change, virulence and immune change — remain incompletely understood.</p><p class="small muted">This is a research rationale; it does not show that vaginal microbiome changes in flight cause disease.</p><a class="small" href="https://www.nasa.gov/reference/risk-of-host-microorganism-interactions/" target="_blank" rel="noopener">NASA — Risk of Host–Microorganism Interactions ↗</a></div>
+   <div class="card"><h3>NASA's Risks of Human Spaceflight</h3><p class="small">NASA's Human Research Program tracks its defined human health and performance risks — with evidence reports for each — in the Human Research Roadmap. BIOME's link is the Host–Microorganism Interactions risk.</p><p class="small muted">Spaceflight context only — not a source of vaginal qPCR reference ranges or diagnostic thresholds.</p><a class="small" href="https://humanresearchroadmap.nasa.gov/" target="_blank" rel="noopener">NASA Human Research Roadmap — risks &amp; evidence ↗</a></div>
+   <div class="card"><h3>Ongoing NASA Human Research Program research</h3><p class="small">HRP researches methods to protect astronaut health and performance using ground facilities, the International Space Station, Artemis missions and analog environments.</p><p class="small muted">Spaceflight context only — not a source of vaginal qPCR reference ranges or diagnostic thresholds.</p><a class="small" href="https://www.nasa.gov/hrp/" target="_blank" rel="noopener">NASA Human Research Program ↗</a></div>
+   <div class="card"><h3>Urinary tract infections in spaceflight</h3><p class="small">Urinary tract infection is among the sex-dependent in-flight medical conditions reviewed and modeled in a probabilistic risk assessment of missions of different lengths (Reyes et al., 2022). BIOME records urinary symptoms for referral only; its molecular panel does not assess UTI.</p><a class="small" href="https://doi.org/10.1089/jwh.2021.0636" target="_blank" rel="noopener">Reyes et al. (2022), J Women's Health ↗</a></div>
    <div class="card"><h3>Female-specific research gap</h3><p class="small">A 2024 systematic review found 16 studies on human reproductive health in spaceflight or analogues — only five included female participants (Gimunová et al., 2024). A 2025 commentary identified open questions on reproductive and gynecological health in long-duration flight (Farrell et al., 2025).</p></div>
    <div class="card"><h3>Open science</h3><p class="small">BIOME's research archive prepares study-, sample- and assay-level metadata in the spirit of NASA's Open Science Data Repository — without claiming submission.</p><a class="small" href="https://www.nasa.gov/reference/osdr-help-tutorials-guidelines-for-data-submission-to-osdr/" target="_blank" rel="noopener">OSDR data-submission guidelines ↗</a></div>
    <div class="card"><h3>Challenge alignment</h3>${dataTable(['Challenge asks for', 'BIOME'], [['Health indicators', 'pH, symptoms, hormonal context, qPCR'], ['Self-assessment', 'Individual baselines, plain-language status'], ['What to do', 'Next action, repeat testing, medical prompts'], ['Changing information', 'Interactive trends'], ['Explanations of risk', 'Result explanations, methods, evidence'], ['Long missions', 'Offline, local storage, cartridges'], ['Medical decisions', 'Reviewer interface, hand-off report']])}<a class="small" href="https://www.spaceappschallenge.org/2026/challenges/health-monitoring-software/" target="_blank" rel="noopener">Space Apps 2026 challenge ↗</a></div>
   </div>`;
-SV['methods.limits'] = () => `<div class="pagehead"><div><h2>Limitations &amp; references</h2></div></div><div class="grid g2"><div class="card"><h3>Important limitations</h3><ul class="small" style="padding-left:18px;margin:0;line-height:1.6">${LIMITS.map((l, i) => `<li${i < 2 ? ' style="color:var(--watch)"' : ''}>${esc(l)}</li>`).join('')}</ul><h4>Physical workflow (proposed, not built)</h4><p class="small muted">Self-collected sterile swab → sealed tube → extraction/reaction kit → disposable qPCR cartridge → compact real-time PCR analyzer → Cq values to the onboard computer; supplementary pH strip. Microgravity collection, containment, liquid handling, reagent storage, waste, reliability and crew workload all need validation. Not flight-qualified.</p></div>
+SV['methods.limits'] = () => `<div class="pagehead"><div><h2>Limitations &amp; references</h2></div></div><div class="grid g2"><div class="card"><h3>Important limitations</h3><ul class="small" style="padding-left:18px;margin:0;line-height:1.6">${LIMITS.map((l, i) => `<li${i < 4 ? ' style="color:var(--watch)"' : ''}>${esc(l)}</li>`).join('')}</ul><h4>Physical workflow (proposed, not built)</h4><p class="small muted">Self-collected sterile swab → sealed tube → extraction/reaction kit → disposable qPCR cartridge → compact real-time PCR analyzer → Cq values to the onboard computer; supplementary pH strip. Microgravity collection, containment, liquid handling, reagent storage, waste, reliability and crew workload all need validation. Not flight-qualified.</p></div>
   <div class="card"><h3>References</h3><ol class="small" style="padding-left:18px;margin:0;line-height:1.7">${REFS.map(([t, u]) => `<li>${esc(t)} ${u ? `<a href="${u}" target="_blank" rel="noopener">${esc(u)}</a>` : ''}</li>`).join('')}</ol></div></div>`;
 SV['methods.selftest'] = () => { const st = App.selfTest; return `<div class="pagehead"><div><h2>Automated self-tests</h2><p class="sub">Run on every load against the six presets and known synthetic inputs, independent of the interface.</p></div><button class="btn" data-act="selftest">Re-run</button></div><div class="card">${st ? `<p><b style="color:${st.pass === st.total ? 'var(--stable)' : 'var(--urgent)'}">${st.pass} of ${st.total} passing</b></p>` + dataTable(['Group', 'Check', 'Rule', 'Result'], st.tests.map(t => [esc(t.group), esc(t.name) + (t.detail ? `<div class="tiny dim">${esc(t.detail)}</div>` : ''), ruleTag(t.rule), t.pass ? '<span class="qc-valid">✓ Pass</span>' : '<span class="qc-qcfail">✗ Fail</span>'])) : 'Running…'}</div>`; };
 SV['methods.settings'] = () => {
@@ -1591,8 +1734,8 @@ const ACT = {
   },
   siminst: el => { const a = A(), f = el.closest('form'); const d = num(f.elements.day.value) ?? App.meta.currentDay; const m = scenarioModel(a.scenario || 'A', a.modelSeed); fillTestForm(simMeasurement(m, d, a.modelSeed, 100 + a.tests.filter(t => t.day === d).length, f.elements.lot.value || 'CAL-2026B')); App._simFilled = true; ACT.inmode(el); toast('⚡ Simulated instrument values loaded. Edit any field to override, then review.'); },
   siminv: el => { const a = A(), f = el.closest('form'); const d = num(f.elements.day.value) ?? App.meta.currentDay; const m = scenarioModel(a.scenario || 'A', a.modelSeed); fillTestForm(simMeasurement(m, d, a.modelSeed, 200 + a.tests.length, f.elements.lot.value || 'CAL-2026B', 'hsc')); App._simFilled = true; toast('Simulated run with a failed human sample control loaded.'); },
-  csvtemplate: () => { const h = ['mission_day', 'assay', 'lot', 'ntc', 'pc', 'hsc_cq', 'iac', ...TARGETS.flatMap(t => [t.key + '_status', t.key + '_cq', t.key + '_log10']), 'notes']; const a = A(); const m = simMeasurement(scenarioModel(a.scenario || 'A', a.modelSeed), App.meta.currentDay, a.modelSeed, 999, 'CAL-2026B'); const r = [App.meta.currentDay, m.assay, m.lot, m.ntc, m.pc, m.hscCq, m.iac, ...TARGETS.flatMap(t => [m.targets[t.key].status, m.targets[t.key].cq ?? '', '']), 'example simulated row']; download('biome_qpcr_template.csv', h.join(',') + '\n' + r.join(',') + '\n', 'text/csv'); },
-  csvimport: el => { if (el) ACT.inmode(el); pickFile('.csv,text/csv', async txt => { const a = A(); const lines = txt.trim().split(/\r?\n/); const h = lines[0].split(',').map(s => s.trim()); let n = 0, last = null; for (const ln of lines.slice(1)) { if (!ln.trim()) continue; const v = ln.split(','); const g = k => { const i = h.indexOf(k); return i < 0 ? '' : (v[i] || '').trim(); }; const day = num(g('mission_day')); if (day == null) continue; const m = { assay: g('assay'), lot: g('lot'), ntc: g('ntc') || 'none', pc: g('pc') || 'pass', hscCq: num(g('hsc_cq')), iac: g('iac') || 'pass', targets: {} }; TARGETS.forEach(t => { m.targets[t.key] = { status: g(t.key + '_status') || 'missing', cq: num(g(t.key + '_cq')), log10: num(g(t.key + '_log10')) }; }); last = addTest(a, day, m, { source: 'csv', notes: g('notes') }); n++; } await saveAstro(a); toast(`Imported ${n} test(s) through the standard QC &amp; analysis pipeline.`); if (last) { App.selResult = last.id; App.view = 'results'; App.sub.results = 'latest'; } render(); }); },
+  csvtemplate: () => { const h = CSV_COLUMNS; const a = A(); const lot = 'CAL-2026B'; const cv = ASSAYS['BIOME-SIM-01'].lots[lot].curves; const m = simMeasurement(scenarioModel(a.scenario || 'A', a.modelSeed), App.meta.currentDay, a.modelSeed, 999, lot); const r = [App.meta.currentDay, dateOf(a, App.meta.currentDay), m.assay, m.lot, 'CRT-0001', m.ntc, m.pc, m.hscCq, m.iac, ...TARGETS.flatMap(t => [m.targets[t.key].status, m.targets[t.key].cq ?? '', '', cv[t.key].m, cv[t.key].b]), 'example simulated row']; download('biome_qpcr_template.csv', h.join(',') + '\n' + r.join(',') + '\n', 'text/csv'); },
+  csvimport: el => { if (el) ACT.inmode(el); pickFile('.csv,text/csv', async txt => { const a = A(); const rows = parseTestCSV(txt); let last = null; rows.forEach(r => { last = addTest(a, r.day, r.m, { source: 'csv', notes: r.notes }); }); await saveAstro(a); toast(`Imported ${rows.length} test(s) through the standard QC &amp; analysis pipeline.`); if (last) { App.selResult = last.id; App.view = 'results'; App.sub.results = 'latest'; } render(); }); },
   openres: el => { App.selResult = el.dataset.id; App.view = 'results'; App.sub.results = 'latest'; render(); focusView(); },
   handoff: () => { const a = A(), E = eng(); const txt = handoffReport(a, E); document.getElementById('view').insertAdjacentHTML('afterbegin', `<div class="card" style="margin-bottom:16px"><div class="row between"><h3 style="margin:0">Structured medical hand-off report</h3><div class="row"><button class="btn" data-act="dlhandoff">⇩ Download .txt</button><button class="btn" onclick="window.print()">Print</button></div></div><pre class="report" id="handofftxt">${esc(txt)}</pre></div>`); },
   dlhandoff: () => download(`BIOME_handoff_${A().code}_day${App.meta.currentDay}.txt`, handoffReport(A(), eng()), 'text/plain'),
@@ -1615,8 +1758,12 @@ const ACT = {
 };
 function pickFile(accept, cb) { const fp = document.getElementById('filepick'); fp.accept = accept; fp.value = ''; fp.onchange = () => { const f = fp.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => cb(String(r.result)); r.readAsText(f); }; fp.click(); }
 const FORMS = {
+  rejectbl: async f => {
+    const reason = (f.elements.reason.value || '').trim(); if (reason.length < 3) { f.elements.reason.focus(); toast('A reason is required to reject the baseline.'); return; }
+    const a = A(); addReview(a, App.meta.currentDay, { type: 'baseline-reject', by: 'CMO-1', reason }); await saveAstro(a); toast('Baseline rejected — a "collect more baseline data" task was created.'); render();
+  },
   checkin: async f => {
-    const o = formObj(f), a = A(), d = App.meta.currentDay; const sym = {}; SYMPTOMS.forEach(([k]) => { sym[k] = +(o['sym_' + k] || 0); });
+    const o = formObj(f), a = A(), d = App.meta.currentDay; const sym = {}; [...SYMPTOMS, URINARY].forEach(([k]) => { sym[k] = +(o['sym_' + k] || 0); });
     const before = eng().state;
     const c = addCheckin(a, d, { symptoms: sym, ph: num(o.ph), cycle: o.cycle, meds: o.meds, notes: o.notes, noSymptoms: !Object.values(sym).some(Boolean) });
     if (o.baselineEvent) addEvent(a, d, o.meds ? 'Health update: ' + o.meds : 'Major relevant change reported at check-in');
@@ -1632,7 +1779,7 @@ const FORMS = {
   test: async f => {
     if (f.dataset.step !== '3') { gotoStep(f, Math.min(3, (+f.dataset.step || 1) + 1)); return; }
     const o = formObj(f), a = A(); const day = num(o.day); if (day == null) { gotoStep(f, 1); return; }
-    const m = readTestForm(f); const ck = [0, 1, 2, 3].map(i => !!o['ck' + i]);
+    const m = readTestForm(f); const ck = [0, 1, 2, 3].map(i => !!o['ck' + i]); if (!m.cartridgeId) delete m.cartridgeId;
     const t = addTest(a, day, m, { source: App._simFilled ? 'simulated (editable)' : 'manual', notes: o.notes, checklist: ck }); App._simFilled = false;
     await saveAstro(a); App.selResult = t.id; App.view = 'results'; App.sub.results = 'latest'; render(); focusView(); const r = eng().results[t.id];
     toast(r.qc.valid ? `Test analyzed. Status: <b>${CATEGORY[r.stateAfter].label}</b>.` : 'Test saved as <b>invalid</b> — repeat collection scheduled.');

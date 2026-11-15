@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BIOME — Baseline-Individualized Onboard Microbiome Evaluation</title>
+<meta name="description" content="BIOME: offline-capable individualized longitudinal vaginal microbiome monitoring and explainable decision support for female astronauts. NASA Space Apps Challenge 2026 research prototype.">
+<style>
+:root{
+  --bg:#060a13;--bg2:#0a1020;--panel:#0e1526;--panel2:#121b30;--line:#1f2c46;--line2:#2a3a5a;
+  --text:#e7edf7;--muted:#8d9cb8;--dim:#61708c;--accent:#4fd1c5;--accent2:#7aa2ff;
+  --baseline:#8fa3c4;--stable:#3ecf8e;--watch:#f5c542;--monitor:#ff9347;--review:#e45fae;--urgent:#ff4d4f;
+  --radius:12px;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 var(--sans)}
+body{background:radial-gradient(1200px 600px at 80% -10%,#12234a55,transparent 60%),radial-gradient(900px 500px at -10% 110%,#0d3b4a44,transparent 60%),var(--bg);min-height:100vh}
+a{color:var(--accent2)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+#app{display:grid;grid-template-columns:248px 1fr;min-height:100vh}
+#nav{border-right:1px solid var(--line);background:linear-gradient(180deg,#0b1222,#080d19);padding:18px 14px;position:sticky;top:0;height:100vh;overflow:auto}
+.brand{display:flex;gap:10px;align-items:center;margin:2px 6px 4px}
+.brand svg{flex:none}
+.brand h1{font-size:20px;letter-spacing:.24em;margin:0;font-weight:800}
+.brandsub{display:block;color:var(--muted);font-size:10.5px;letter-spacing:.02em;line-height:1.3;margin:6px 6px 16px}
+#nav button.nav{display:flex;width:100%;align-items:center;gap:10px;text-align:left;background:none;border:0;padding:8px 10px;border-radius:8px;color:var(--muted);cursor:pointer;font-size:13.5px}
+#nav button.nav:hover{background:#ffffff08;color:var(--text)}
+#nav button.nav.on{background:linear-gradient(90deg,#4fd1c51f,#4fd1c505);color:var(--text);box-shadow:inset 2px 0 0 var(--accent)}
+#nav .navgrp{font-size:10.5px;text-transform:uppercase;letter-spacing:.14em;color:var(--dim);margin:14px 10px 4px}
+#nav .ico{width:18px;text-align:center;opacity:.8}
+.selftest-pill{margin:16px 6px 0;padding:10px;border:1px solid var(--line);border-radius:10px;font-size:12px;color:var(--muted);background:var(--panel)}
+main{min-width:0}
+#topbar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:12px 22px;border-bottom:1px solid var(--line);background:#070c18cc;backdrop-filter:blur(8px);position:sticky;top:0;z-index:20}
+#topbar .grp{display:flex;gap:8px;align-items:center}
+#topbar label{color:var(--muted);font-size:12px}
+.daybox{display:flex;align-items:center;border:1px solid var(--line2);border-radius:10px;overflow:hidden}
+.daybox span{padding:6px 12px;font-family:var(--mono);font-size:13px;min-width:132px;text-align:center}
+.daybox button{background:var(--panel2);border:0;padding:6px 10px;cursor:pointer;color:var(--text)}
+.daybox button:hover{background:#1b2742}
+.seg{display:inline-flex;border:1px solid var(--line2);border-radius:10px;overflow:hidden}
+.seg button{background:none;border:0;padding:6px 12px;cursor:pointer;color:var(--muted);font-size:12.5px}
+.seg button.on{background:var(--accent);color:#04201d;font-weight:700}
+.simpill{margin-left:auto;font-size:11px;letter-spacing:.08em;text-transform:uppercase;border:1px dashed var(--watch);color:var(--watch);padding:4px 10px;border-radius:999px}
+#urgent{display:none}
+#urgent.show{display:flex;gap:14px;align-items:center;background:repeating-linear-gradient(135deg,#3a0b0f,#3a0b0f 14px,#4a0d12 14px,#4a0d12 28px);border-bottom:2px solid var(--urgent);padding:12px 22px}
+#urgent strong{color:#fff;font-size:15px}
+#view{padding:22px;max-width:1360px}
+h2{font-size:22px;margin:0 0 4px}
+h3{font-size:15px;margin:0 0 10px;letter-spacing:.01em}
+h4{font-size:13px;margin:14px 0 6px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}
+.sub{color:var(--muted);margin:0 0 18px;max-width:900px}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.span2{grid-column:span 2}.span3{grid-column:span 3}.spanall{grid-column:1/-1}
+.card{background:linear-gradient(180deg,var(--panel),#0c1322);border:1px solid var(--line);border-radius:var(--radius);padding:16px;min-width:0}
+.card.tight{padding:12px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:13px}
+.kv dt{color:var(--muted)}.kv dd{margin:0}
+.muted{color:var(--muted)}.dim{color:var(--dim)}.mono{font-family:var(--mono)}
+.small{font-size:12px}.tiny{font-size:11px}
+.big{font-size:28px;font-weight:800;letter-spacing:-.01em}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.between{justify-content:space-between}
+.btn{background:var(--panel2);border:1px solid var(--line2);padding:8px 14px;border-radius:9px;cursor:pointer;color:var(--text);font-size:13px;display:inline-flex;gap:6px;align-items:center}
+.btn:hover{border-color:var(--accent)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#04201d;font-weight:700}
+.btn.pri:hover{filter:brightness(1.08)}
+.btn.warn{border-color:#ff4d4f88;color:#ffb3b4}
+.btn.sm{padding:4px 10px;font-size:12px}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+input[type=text],input[type=number],input[type=date],select,textarea{background:#0a1121;border:1px solid var(--line2);border-radius:8px;padding:7px 9px;min-width:0}
+textarea{width:100%;min-height:62px;resize:vertical}
+input[type=number]{width:96px}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
+label.f>input,label.f>select,label.f>textarea{color:var(--text);font-size:13px}
+.formgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;background:#0b1222;position:sticky;top:0}
+td.num,th.num{text-align:right;font-family:var(--mono)}
+.tablewrap{overflow:auto;max-height:420px;border:1px solid var(--line);border-radius:10px}
+.tablewrap table th:first-child,.tablewrap table td:first-child{padding-left:12px}
+tr.sel td{background:#4fd1c512}
+tr.click{cursor:pointer}tr.click:hover td{background:#ffffff06}
+.state{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-weight:700;font-size:12.5px;border:1px solid;white-space:nowrap}
+.state .shape{font-size:11px}
+.s-baseline{color:var(--baseline);border-color:#8fa3c466;background:#8fa3c414}
+.s-stable{color:var(--stable);border-color:#3ecf8e66;background:#3ecf8e14}
+.s-watch{color:var(--watch);border-color:#f5c54266;background:#f5c54214}
+.s-monitor{color:var(--monitor);border-color:#ff934766;background:#ff934714}
+.s-review{color:var(--review);border-color:#e45fae66;background:#e45fae14}
+.s-urgent{color:#fff;border-color:var(--urgent);background:#ff4d4f33}
+.statecard{border-left:4px solid var(--line2)}
+.statecard.s-stable{border-left-color:var(--stable)}.statecard.s-watch{border-left-color:var(--watch)}.statecard.s-monitor{border-left-color:var(--monitor)}.statecard.s-review{border-left-color:var(--review)}.statecard.s-baseline{border-left-color:var(--baseline)}
+.statecard.s-stable,.statecard.s-watch,.statecard.s-monitor,.statecard.s-review,.statecard.s-baseline{color:var(--text);background:linear-gradient(180deg,var(--panel),#0c1322)}
+.tag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:6px;border:1px solid var(--line2);color:var(--muted);font-family:var(--mono);white-space:nowrap}
+.tag.rule{color:var(--accent);border-color:#4fd1c555}
+.tag.ev-pub{color:#9fe0b0;border-color:#3ecf8e55}.tag.ev-stat{color:#a9c1ff;border-color:#7aa2ff55}.tag.ev-assume{color:#ffd27a;border-color:#f5c54255}.tag.ev-sim{color:#f0a3d0;border-color:#e45fae55}
+.qc-valid{color:var(--stable)}.qc-blq{color:var(--watch)}.qc-nd{color:var(--baseline)}.qc-qcfail{color:var(--urgent)}.qc-missing{color:var(--dim)}
+.sig-high{color:var(--monitor);font-weight:700}.sig-low{color:var(--accent2);font-weight:700}
+.notice{border:1px solid var(--line2);border-radius:10px;padding:10px 14px;display:flex;gap:10px;align-items:flex-start;background:#0c1426;margin-bottom:10px}
+.notice.warn{border-color:#f5c54266;background:#f5c5420d}
+.notice.bad{border-color:#ff4d4f77;background:#ff4d4f12}
+.notice.ok{border-color:#3ecf8e55;background:#3ecf8e0d}
+.notice.info{border-color:#7aa2ff55;background:#7aa2ff0d}
+.notice b{white-space:nowrap}
+.loglist{list-style:none;margin:0;padding:0;max-height:360px;overflow:auto}
+.loglist li{padding:7px 0;border-bottom:1px solid var(--line);display:grid;grid-template-columns:62px 54px 1fr;gap:8px;font-size:12.5px}
+.chart{width:100%;height:auto;display:block}
+.chart .grid{stroke:#1d2942;stroke-width:1}
+.chart .tick{fill:#6f7f9c;font-size:10.5px;font-family:var(--mono)}
+.chart .launch{stroke:#7aa2ff;stroke-dasharray:3 4;opacity:.7}
+.chart .band{fill:#4fd1c514;stroke:#4fd1c555;stroke-dasharray:4 3}
+.chart .mean{stroke:#4fd1c5aa;stroke-dasharray:6 4}
+.chart .ref{stroke:#f5c542aa;stroke-dasharray:5 4}
+.chart .pt{cursor:pointer}
+.chart .inv{stroke:var(--urgent);stroke-width:2}
+.chart .axl{fill:#8d9cb8;font-size:11px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--muted);margin-top:6px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+#tip{position:fixed;pointer-events:none;background:#0b1222f2;border:1px solid var(--line2);padding:6px 9px;border-radius:8px;font-size:12px;z-index:100;display:none;max-width:320px;white-space:pre-line}
+#toast{position:fixed;right:18px;bottom:18px;display:flex;flex-direction:column;gap:8px;z-index:99}
+#toast div{background:var(--panel2);border:1px solid var(--line2);border-left:3px solid var(--accent);padding:10px 14px;border-radius:10px;max-width:420px;box-shadow:0 8px 30px #0008;font-size:13px}
+.symgrid{display:grid;grid-template-columns:170px repeat(4,1fr);gap:6px;align-items:center}
+.radio-seg{display:flex;gap:0}
+.radio-seg label{flex:1}
+.radio-seg input{position:absolute;opacity:0}
+.radio-seg span{display:block;text-align:center;padding:6px 4px;border:1px solid var(--line2);cursor:pointer;font-size:12.5px;color:var(--muted)}
+.radio-seg label:first-child span{border-radius:8px 0 0 8px}.radio-seg label:last-child span{border-radius:0 8px 8px 0}
+.radio-seg input:checked+span{background:#4fd1c522;color:var(--text);border-color:var(--accent)}
+.radio-seg input:focus-visible+span{outline:2px solid var(--accent)}
+.redbox{border:1px solid #ff4d4f77;background:#ff4d4f0c;border-radius:10px;padding:12px}
+.check{display:flex;gap:8px;align-items:flex-start;font-size:13px;margin:4px 0}
+.meter{height:8px;border-radius:99px;background:#1a243b;overflow:hidden}
+.meter>div{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.meter.low>div{background:linear-gradient(90deg,var(--watch),var(--urgent))}
+.strip{display:flex;height:16px;border-radius:5px;overflow:hidden;border:1px solid var(--line)}
+.taskitem{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line)}
+.taskitem:last-child{border-bottom:0}
+.pill{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;padding:2px 8px;border-radius:99px;border:1px solid var(--line2);color:var(--muted)}
+.formula{font-family:var(--mono);background:#0a1121;border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin:6px 0;white-space:pre-wrap;font-size:12.5px;color:#cfe9ff}
+details>summary{cursor:pointer;color:var(--accent2);font-size:12.5px;margin-top:8px}
+.progress{height:6px;background:#1a243b;border-radius:99px;overflow:hidden;margin:8px 0}
+.progress>div{height:100%;background:var(--accent);width:0}
+.astro-card{cursor:pointer;transition:border-color .15s}
+.astro-card:hover{border-color:var(--accent)}
+.astro-card.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+pre.report{white-space:pre-wrap;font-family:var(--mono);font-size:12px;background:#0a1121;border:1px solid var(--line);border-radius:10px;padding:14px;max-height:480px;overflow:auto}
+.hero{display:grid;grid-template-columns:1.2fr 1fr;gap:16px}
+.sr{position:absolute;left:-9999px}
+@media (max-width:1100px){.g4{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(2,minmax(0,1fr))}.hero{grid-template-columns:1fr}}
+@media (max-width:900px){
+  #app{grid-template-columns:1fr}
+  #nav{position:static;height:auto;display:flex;flex-wrap:nowrap;overflow-x:auto;gap:4px;padding:10px;border-right:0;border-bottom:1px solid var(--line)}
+  #nav .navgrp,.brandsub,.selftest-pill{display:none}
+  #nav button.nav{width:auto;white-space:nowrap}
+  .brand{margin-right:10px}
+  .g2,.g3,.g4{grid-template-columns:1fr}.span2,.span3{grid-column:auto}
+  .symgrid{grid-template-columns:1fr}
+  #topbar{position:static}
+  .simpill{margin-left:0}
+}
+@media print{#nav,#topbar,#toast{display:none}#app{display:block}body{background:#fff;color:#000}}
+</style>
+</head>
+<body>
+<div id="app">
+  <nav id="nav" aria-label="Main navigation"></nav>
+  <main>
+    <header id="topbar"></header>
+    <div id="urgent" role="alert" aria-live="assertive"></div>
+    <section id="view" tabindex="-1" aria-live="polite"></section>
+  </main>
+</div>
+<div id="tip" role="tooltip"></div>
+<div id="toast" aria-live="polite"></div>
+<input type="file" id="filepick" class="sr" aria-hidden="true" tabindex="-1">
+
+<script>
+'use strict';
+/* =====================================================================
+   BIOME — Baseline-Individualized Onboard Microbiome Evaluation
+   NASA Space Apps Challenge 2026 · Research & decision-support prototype
+   NOT a clinically validated medical device. All demo data are SIMULATED.
+   ===================================================================== */
+const VERSION = '0.9.0-hackathon';
+
+/* ---------- helpers ---------- */
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num = v => (v === '' || v == null || (typeof v === 'string' && v.trim() === '') || isNaN(+v)) ? null : +v;
+const fmt = (x, d = 2) => (x == null || !isFinite(x)) ? '—' : Number(x).toFixed(d);
+const fmtP = p => p == null ? '—' : (p < 0.0001 ? '<0.0001' : p.toFixed(4));
+const fmtFold = f => f == null ? '—' : f >= 1 ? (f < 10 ? f.toFixed(1) : Math.round(f).toLocaleString('en-US')) + '×' : (1 / f < 10 ? (1 / f).toFixed(1) : Math.round(1 / f).toLocaleString('en-US')) + '-fold lower';
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+const uniq = a => [...new Set(a)];
+const median = a => { if (!a.length) return null; const s = [...a].sort((x, y) => x - y); const m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+const avg = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
+function addDays(iso, d) { const t = new Date(iso + 'T00:00:00Z'); t.setUTCDate(t.getUTCDate() + d); return t.toISOString().slice(0, 10); }
+
+/* ---------- statistics ---------- */
+function lnGamma(z) {
+  const c = [0.99999999999980993, 676.5203681218851, -1259.1392167224028, 771.32342877765313, -176.61502916214059, 12.507343278686905, -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7];
+  if (z < 0.5) return Math.log(Math.PI / Math.sin(Math.PI * z)) - lnGamma(1 - z);
+  z -= 1; let x = c[0]; for (let i = 1; i < 9; i++) x += c[i] / (z + i);
+  const t = z + 7.5; return 0.5 * Math.log(2 * Math.PI) + (z + 0.5) * Math.log(t) - t + Math.log(x);
+}
+function betacf(a, b, x) {
+  const MAXIT = 300, EPS = 3e-15, FPMIN = 1e-300;
+  const qab = a + b, qap = a + 1, qam = a - 1; let c = 1, d = 1 - qab * x / qap;
+  if (Math.abs(d) < FPMIN) d = FPMIN; d = 1 / d; let h = d;
+  for (let m = 1; m <= MAXIT; m++) {
+    const m2 = 2 * m; let aa = m * (b - m) * x / ((qam + m2) * (a + m2));
+    d = 1 + aa * d; if (Math.abs(d) < FPMIN) d = FPMIN; c = 1 + aa / c; if (Math.abs(c) < FPMIN) c = FPMIN; d = 1 / d; h *= d * c;
+    aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2));
+    d = 1 + aa * d; if (Math.abs(d) < FPMIN) d = FPMIN; c = 1 + aa / c; if (Math.abs(c) < FPMIN) c = FPMIN; d = 1 / d;
+    const del = d * c; h *= del; if (Math.abs(del - 1) < EPS) break;
+  }
+  return h;
+}
+function ibeta(a, b, x) {
+  if (x <= 0) return 0; if (x >= 1) return 1;
+  const bt = Math.exp(lnGamma(a + b) - lnGamma(a) - lnGamma(b) + a * Math.log(x) + b * Math.log(1 - x));
+  return x < (a + 1) / (a + b + 2) ? bt * betacf(a, b, x) / a : 1 - bt * betacf(b, a, 1 - x) / b;
+}
+/** Student's t cumulative distribution function */
+function tCDF(t, df) { const x = df / (df + t * t); const p = 0.5 * ibeta(df / 2, 0.5, x); return t >= 0 ? 1 - p : p; }
+/** inverse t CDF for p in (0.5,1) by bisection */
+const _tInvCache = new Map();
+function tInv(p, df) { const k = p + '|' + df; if (_tInvCache.has(k)) return _tInvCache.get(k); const v = _tInv(p, df); _tInvCache.set(k, v); return v; }
+function _tInv(p, df) { let lo = 0, hi = 1e4; for (let i = 0; i < 200; i++) { const mid = (lo + hi) / 2; if (tCDF(mid, df) < p) lo = mid; else hi = mid; } return (lo + hi) / 2; }
+function meanSd(xs) { const n = xs.length; const m = xs.reduce((a, b) => a + b, 0) / n; const s = n > 1 ? Math.sqrt(xs.reduce((a, b) => a + (b - m) ** 2, 0) / (n - 1)) : 0; return { n, mean: m, sd: s }; }
+/** Holm (1979) step-down, family = targets in one test panel */
+function holm(ps, alpha) {
+  const s = [...ps].sort((a, b) => a.p - b.p); const m = s.length; const res = {}; let stop = false, run = 0;
+  s.forEach((e, i) => {
+    const thr = alpha / (m - i); const rej = !stop && e.p <= thr; if (!rej) stop = true;
+    run = Math.max(run, Math.min(1, (m - i) * e.p));
+    res[e.key] = { rank: i + 1, thr, rejected: rej, padj: run };
+  });
+  return { m, res };
+}
+
+/* ---------- deterministic RNG (reproducible seeds) ---------- */
+function hashStr(s) { let h = 2166136261 >>> 0; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const rngFor = (...p) => mulberry32(hashStr(p.join('|')));
+function gauss(r) { let u = 0, v = 0; while (u === 0) u = r(); while (v === 0) v = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+
+/* ---------- domain constants ---------- */
+const TARGETS = [
+  { key: 'Lcr', name: 'L. crispatus', full: 'Lactobacillus crispatus', domain: 'protective' },
+  { key: 'Ljen', name: 'L. jensenii', full: 'Lactobacillus jensenii', domain: 'protective' },
+  { key: 'Lgas', name: 'L. gasseri', full: 'Lactobacillus gasseri', domain: 'protective' },
+  { key: 'Lin', name: 'L. iners', full: 'Lactobacillus iners', domain: 'iners' },
+  { key: 'Gva', name: 'G. vaginalis', full: 'Gardnerella vaginalis', domain: 'bv' },
+  { key: 'Fva', name: 'F. vaginae', full: 'Fannyhessea (Atopobium) vaginae', domain: 'bv' },
+  { key: 'Meg', name: 'Megasphaera spp.', full: 'Megasphaera species', domain: 'bv' },
+  { key: 'BVAB2', name: 'BVAB2', full: 'BV-associated bacterium 2 (optional)', domain: 'bv' },
+  { key: 'Cand', name: 'Candida spp.', full: 'Candida species (fungal pathway)', domain: 'candida' },
+  { key: 'T16S', name: 'Total 16S', full: 'Total bacterial 16S (load)', domain: 'load' },
+];
+const TK = Object.fromEntries(TARGETS.map(t => [t.key, t]));
+const PROT = ['Lcr', 'Ljen', 'Lgas'], BV = ['Gva', 'Fva', 'Meg', 'BVAB2'];
+const COLORS = { Lcr: '#4fd1c5', Ljen: '#7aa2ff', Lgas: '#a78bfa', Lin: '#94a3b8', Gva: '#ff9347', Fva: '#f5c542', Meg: '#e45fae', BVAB2: '#ff6b6b', Cand: '#c3e65a', T16S: '#e7edf7' };
+const DOMAINS = { protective: 'Protective-associated Lactobacillus', iners: 'L. iners (tracked separately)', bv: 'BV-associated bacteria', candida: 'Candida (fungal pathway)', load: 'Total bacterial load' };
+const QC_SHORT = { valid: 'Valid', blq: 'Detected <LOQ', nd: 'Not detected', qcfail: 'QC failure', missing: 'Missing' };
+const QC_LABEL = { valid: 'Valid quantitative result', blq: 'Detected, below quantification limit', nd: 'Not detected', qcfail: 'QC failure', missing: 'Missing' };
+const SYMPTOMS = [['discharge', 'Unusual discharge'], ['odor', 'Unusual odor'], ['itch', 'Itching or irritation'], ['burn', 'Burning or pain']];
+const SEV = ['None', 'Mild', 'Moderate', 'Severe'];
+const RED_FLAGS = [['pelvic', 'Severe or sudden pelvic pain'], ['fever', 'Fever accompanied by pelvic pain'], ['bleed', 'Heavy bleeding with concerning systemic symptoms'], ['other', 'Other red flag defined by the mission medical protocol']];
+const CYCLE_TAGS = ['Not recorded', 'Menstrual', 'Follicular', 'Ovulatory', 'Luteal', 'Suppressed (continuous regimen)', 'Irregular / unknown', 'Not applicable'];
+
+const STATES = {
+  'Baseline': { cls: 's-baseline', shape: '◌', meaning: 'Individual reference profile is still being established', action: 'Continue baseline collection and review' },
+  'Stable': { cls: 's-stable', shape: '●', meaning: 'No concerning changes identified', action: 'Continue routine surveillance' },
+  'Watch': { cls: 's-watch', shape: '▲', meaning: 'New statistically unusual measurement', action: 'Arrange repeat test' },
+  'Monitor': { cls: 's-monitor', shape: '◆', meaning: 'Change confirmed or a pattern remains concerning', action: 'Increase monitoring frequency and review trends' },
+  'Clinical Review': { cls: 's-review', shape: '✚', meaning: 'Symptoms or findings warrant medical assessment', action: 'Refer to authorized medical reviewer' },
+};
+const STATE_COLOR = { 'Baseline': '#8fa3c4', 'Stable': '#3ecf8e', 'Watch': '#f5c542', 'Monitor': '#ff9347', 'Clinical Review': '#e45fae' };
+const RULES = {
+  R0: 'Baseline incomplete — remain in Baseline; no individual threshold implied',
+  R1: 'New analytical deviation (outside individual limit, passes Holm) → Watch; schedule repeat',
+  R2: 'Repeat returns within expected limits → Stable; original signal recorded as unconfirmed/transient',
+  R3: 'Repeat confirms deviation → Monitor; increase monitoring frequency',
+  R4: 'Provisional BV-like pattern candidate — not a diagnosis; confirmatory testing; non-urgent review if confirmed',
+  R5: 'Symptoms with a concerning (BV-like) pattern → Clinical Review',
+  R6: 'Symptoms despite stable qPCR — symptom-assessment task; Clinical Review per triage policy',
+  R7: 'Candida detection alone — record and contextualize; no automatic diagnosis, treatment or escalation',
+  R8: 'Red-flag symptoms → Urgent overlay immediately; do not wait for qPCR',
+  R9: 'Invalid test — no state update; cartridge consumed; repeat per policy',
+  R10: 'Baseline-changing event — flag baseline for review; preserve original; authorized decision required',
+  NC: 'No statistically unusual change detected (within individual prediction limits)',
+  MR: 'Medical reviewer decision recorded',
+  CTX: 'Contextual information recorded (no state change)',
+};
+const PATTERNS = {
+  stable: { label: 'Stable pattern', interp: 'No concerning changes detected', resp: 'Routine surveillance' },
+  bvinc: { label: 'BV-associated increase', interp: 'One or more BV-associated targets rise beyond individual limits', resp: 'Repeat test and assess context' },
+  bvlike: { label: 'Provisional BV-like microbial pattern — not a diagnosis', interp: 'Multiple BV-associated targets rise while protective-associated Lactobacillus falls', resp: 'Confirm and increase monitoring' },
+  lactoenrich: { label: 'Lactobacillus enrichment (neutral pattern)', interp: 'Lactobacillus increases without corresponding BV-associated increases', resp: 'Neutral pattern; monitor' },
+  loadshift: { label: 'Total-load shift', interp: 'Total bacterial load changes without a coherent BV-associated pattern', resp: 'Repeat or monitor' },
+  mixed: { label: 'Mixed or unclear change', interp: 'Several targets change without a coherent pattern', resp: 'Repeat and review if persistent' },
+};
+
+/* ---------- simulated assay (hypothetical calibration) ---------- */
+function mkLot(m, b, hscMax) {
+  const curves = {};
+  TARGETS.forEach((t, i) => { curves[t.key] = { m: +(m + ((i % 3) - 1) * 0.03).toFixed(3), b: +(b + ((i % 4) - 1.5) * 0.2).toFixed(2), lod: 1.3, loq: 2.0, uloq: 9.5 }; });
+  return { curves, hsc: { maxCq: hscMax } };
+}
+const ASSAYS = {
+  'BIOME-SIM-01': {
+    label: 'BIOME simulated vaginal qPCR panel v0.1 (hypothetical)', units: 'log10 copies/reaction', simulated: true,
+    lots: { 'CAL-2026A': mkLot(-3.32, 40.0, 32), 'CAL-2026B': mkLot(-3.38, 39.6, 32) },
+  },
+};
+
+/* ---------- configuration (every value traceable) ---------- */
+const DEFAULT_CONFIG = {
+  baselineMin: 6, alpha: 0.05, adaptationDays: 28, adaptationInterval: 7, routineInterval: 14, watchRepeat: 2, monitorInterval: 3, invalidRepeat: 1,
+  bvMinElevated: 2, protMinReduced: 1, cqTol: 0.3, iacPolicy: 'reject', symEscSeverity: 2, symEscDays: 3, highVarSd: 0.6,
+  cartridges: 180, reserveWarn: 25, benchRuns: 100, benchSeed: 2026, missionLength: 120, invalidProb: 0.03,
+};
+const CONFIG_META = {
+  baselineMin: ['Baseline minimum (valid observations per target)', 'Prototype assumption', 'ev-assume', 'No validated vaginal-microbiome minimum established'],
+  alpha: ['Two-sided statistical significance level', 'Statistical convention', 'ev-stat', 'Conventional level; Holm (1979). Not a clinical risk threshold'],
+  adaptationDays: ['Initial flight adaptation period (days)', 'Prototype operational default', 'ev-assume', 'Not a validated clinical interval'],
+  adaptationInterval: ['Initial flight interval (days)', 'Prototype operational default', 'ev-assume', 'Not a validated clinical interval'],
+  routineInterval: ['Routine monitoring interval (days)', 'Prototype operational default', 'ev-assume', 'Not a validated clinical interval'],
+  watchRepeat: ['Watch repeat (days; 2 = within 48 h)', 'Prototype operational default', 'ev-assume', 'Not a validated clinical interval'],
+  monitorInterval: ['Monitor interval (days)', 'Prototype operational default', 'ev-assume', 'Not a validated clinical interval'],
+  invalidRepeat: ['Invalid sample repeat (days)', 'Prototype operational default', 'ev-assume', 'Logistics assumption'],
+  bvMinElevated: ['BV-like rule: min. elevated BV-associated targets', 'Provisional engineering heuristic', 'ev-assume', 'Requires prospective validation'],
+  protMinReduced: ['BV-like rule: min. reduced protective Lactobacillus', 'Provisional engineering heuristic', 'ev-assume', 'Requires prospective validation'],
+  cqTol: ['Cq vs entered-abundance consistency tolerance (log10)', 'Prototype assumption', 'ev-assume', 'Software consistency check; assay validation should define'],
+  iacPolicy: ['Internal amplification control inhibition policy', 'Prototype assumption', 'ev-assume', 'Must follow assay validation ("reject" or "flag")'],
+  symEscSeverity: ['Triage: symptom severity prompting Clinical Review (0–3)', 'Prototype assumption', 'ev-assume', 'Placeholder for mission-approved triage policy'],
+  symEscDays: ['Triage: consecutive symptomatic days prompting Clinical Review', 'Prototype assumption', 'ev-assume', 'Placeholder for mission-approved triage policy'],
+  highVarSd: ['Baseline high-variability warning (SD, log10)', 'Prototype assumption', 'ev-assume', 'Display warning only'],
+  cartridges: ['Cartridges available for the mission', 'Simulation configuration', 'ev-sim', 'Hypothetical inventory'],
+  reserveWarn: ['Cartridge reserve warning level', 'Simulation configuration', 'ev-sim', 'Hypothetical'],
+  benchRuns: ['Benchmark run count (missions per configuration)', 'Simulation configuration', 'ev-sim', 'Demonstration setting, not a sample-size recommendation'],
+  benchSeed: ['Benchmark random seed', 'Simulation configuration', 'ev-sim', 'Reproducibility'],
+  missionLength: ['Benchmark mission length (days)', 'Simulation configuration', 'ev-sim', 'Hypothetical'],
+  invalidProb: ['Simulated invalid-test probability', 'Prototype assumption', 'ev-sim', 'Simulation parameter'],
+};
+
+/* =====================================================================
+   QUALITY CONTROL  (§7)
+   ===================================================================== */
+function qcTest(test, cfg) {
+  const assay = ASSAYS[test.assay]; const lot = assay && assay.lots[test.lot];
+  const reasons = [], warnings = []; let valid = true;
+  if (!lot) { valid = false; reasons.push('Required assay/calibration information is missing — calibrated abundance not calculated.'); }
+  if (test.ntc === 'amplified') { valid = false; reasons.push('No-template control amplified beyond assay acceptance criteria — run rejected (possible contamination).'); }
+  if (test.pc === 'fail') { valid = false; reasons.push('Positive control failed its acceptance criteria — run rejected.'); }
+  const hsc = num(test.hscCq);
+  if (lot) {
+    if (hsc == null) { valid = false; reasons.push('Human sample control not amplified — sample adequacy not established; sample rejected.'); }
+    else if (hsc > lot.hsc.maxCq) { valid = false; reasons.push(`Human sample control failed (Cq ${fmt(hsc)} > assay criterion ${lot.hsc.maxCq}) — sample adequacy not established; sample rejected.`); }
+  }
+  if (test.iac === 'fail') { valid = false; reasons.push('Internal amplification control failed — amplification failure; run rejected.'); }
+  if (test.iac === 'inhibited') { if (cfg.iacPolicy === 'flag') warnings.push('Internal amplification control indicates inhibition — flagged per configured assay policy.'); else { valid = false; reasons.push('Internal amplification control indicates PCR inhibition — rejected per assay validation policy.'); } }
+  const targets = {};
+  TARGETS.forEach(t => {
+    const e = (test.targets || {})[t.key] || {}; const cv = lot && lot.curves[t.key];
+    const cq = num(e.cq), xin = num(e.log10); const o = { status: 'missing', x: null, cq, xin, xcq: null, note: '' };
+    if (cv) { o.lod = cv.lod; o.loq = cv.loq; o.uloq = cv.uloq; }
+    if (!valid) { o.status = 'qcfail'; o.note = 'Run/sample QC failure'; targets[t.key] = o; return; }
+    const st = e.status || (cq != null || xin != null ? 'detected' : 'missing');
+    if (st === 'missing') { o.note = 'Target not run'; }
+    else if (st === 'nd') { o.status = 'nd'; o.note = 'Below detection limit — recorded as not detected, not zero'; }
+    else {
+      const xcq = cq != null ? (cq - cv.b) / cv.m : null; o.xcq = xcq;
+      if (xcq != null && xin != null && Math.abs(xcq - xin) > cfg.cqTol) { o.status = 'qcfail'; o.note = `Cq and quantified abundance are inconsistent under ${test.lot} (Cq→${fmt(xcq)} vs entered ${fmt(xin)} log10)`; }
+      else {
+        const x = xcq ?? xin;
+        if (x == null) { o.note = 'Detected but no Cq or abundance entered'; }
+        else if (x < cv.lod) { o.status = 'nd'; o.note = 'Below assay detection limit — not detected, not zero'; }
+        else if (x < cv.loq) { o.status = 'blq'; o.x = x; o.note = 'Detected, not reliably quantifiable'; }
+        else if (x > cv.uloq) { o.status = 'qcfail'; o.x = x; o.note = 'Above validated linear range'; }
+        else { o.status = 'valid'; o.x = x; }
+      }
+    }
+    targets[t.key] = o;
+  });
+  return { valid, reasons, warnings, targets };
+}
+
+/* =====================================================================
+   BASELINE  (§8)
+   ===================================================================== */
+function computeBaseline(astro, cfg) {
+  const tests = astro.tests.filter(t => t.day < 0);
+  const qcs = tests.map(t => ({ t, q: qcTest(t, cfg) }));
+  const validRuns = qcs.filter(o => o.q.valid);
+  const targets = {}; const warnings = [];
+  TARGETS.forEach(t => {
+    const xs = validRuns.filter(o => o.q.targets[t.key].status === 'valid').map(o => o.q.targets[t.key].x);
+    const det = validRuns.filter(o => ['valid', 'blq'].includes(o.q.targets[t.key].status)).length;
+    const st = xs.length ? meanSd(xs) : { n: 0, mean: null, sd: null };
+    const b = { ...st, min: xs.length ? Math.min(...xs) : null, max: xs.length ? Math.max(...xs) : null, detFrac: validRuns.length ? det / validRuns.length : 0, sufficient: st.n >= cfg.baselineMin && st.sd > 0, provisional: st.n < cfg.baselineMin * 1.5, highVar: st.sd > cfg.highVarSd };
+    targets[t.key] = b;
+    if (b.highVar) warnings.push(`${t.name}: highly variable baseline (SD ${fmt(st.sd)} log10) — review.`);
+  });
+  const protMax = Math.max(...PROT.map(k => targets[k].mean ?? -Infinity));
+  const bvMax = Math.max(...BV.map(k => targets[k].mean ?? -Infinity), targets.Lin.mean ?? -Infinity);
+  if (validRuns.length && protMax < bvMax) warnings.push('Non-Lactobacillus-dominated (or L. iners-dominated) baseline — flagged for review, not classified as abnormal.');
+  const nSuff = TARGETS.filter(t => targets[t.key].sufficient).length;
+  if (nSuff === 0) warnings.push(`No target has ≥ ${cfg.baselineMin} valid quantifiable observations yet.`);
+  return { targets, nSamples: tests.length, nValidRuns: validRuns.length, warnings, nSufficient: nSuff, computedAt: new Date().toISOString(), cfgMin: cfg.baselineMin };
+}
+
+/* =====================================================================
+   LONGITUDINAL ANALYSIS  (§9)
+   ===================================================================== */
+function analyzeTest(qc, bl, cfg) {
+  const per = {}; const ps = [];
+  TARGETS.forEach(t => {
+    const q = qc.targets[t.key]; const b = bl.targets[t.key]; const r = { key: t.key, status: q.status, x: q.x, quant: false, signal: null };
+    if (b) { r.mean = b.mean; r.sd = b.sd; r.n = b.n; }
+    if (q.status === 'valid' && b && b.sufficient) {
+      const se = b.sd * Math.sqrt(1 + 1 / b.n), df = b.n - 1, tc = tInv(1 - cfg.alpha / 2, df);
+      r.t = (q.x - b.mean) / se; r.df = df; r.p = 2 * (1 - tCDF(Math.abs(r.t), df));
+      r.lo = b.mean - tc * se; r.hi = b.mean + tc * se; r.diff = q.x - b.mean; r.fold = Math.pow(10, r.diff);
+      r.outside = q.x < r.lo ? 'low' : q.x > r.hi ? 'high' : null; r.quant = true; ps.push({ key: t.key, p: r.p });
+    } else {
+      r.reason = q.status !== 'valid' ? QC_LABEL[q.status] + ' — no quantitative comparison' : 'Insufficient baseline — not suitable for quantitative trend analysis';
+    }
+    if (b) {
+      if (q.status === 'nd' && b.detFrac >= 0.5) r.transition = 'Detected at baseline → not detected now (qualitative)';
+      if ((q.status === 'valid' || q.status === 'blq') && b.detFrac < 0.5) r.transition = 'Mostly not detected at baseline → detected now (qualitative)';
+    }
+    per[t.key] = r;
+  });
+  const h = holm(ps, cfg.alpha);
+  Object.entries(h.res).forEach(([k, v]) => { Object.assign(per[k], { padj: v.padj, holmThr: v.thr, holmRank: v.rank, rejected: v.rejected }); if (v.rejected) per[k].signal = per[k].t > 0 ? 'high' : 'low'; });
+  return { per, m: h.m };
+}
+
+/* =====================================================================
+   PATTERN INTERPRETATION  (§10)
+   ===================================================================== */
+function classify(an, cfg) {
+  const sig = k => an.per[k] && an.per[k].signal;
+  const bvUp = BV.filter(k => sig(k) === 'high'), protDown = PROT.filter(k => sig(k) === 'low'), protUp = PROT.filter(k => sig(k) === 'high');
+  const signals = TARGETS.filter(t => t.key !== 'Cand' && sig(t.key)).map(t => t.key);
+  let primary = 'stable';
+  if (bvUp.length >= cfg.bvMinElevated && protDown.length >= cfg.protMinReduced) primary = 'bvlike';
+  else if (bvUp.length) primary = 'bvinc';
+  else if ((protUp.length || sig('Lin') === 'high') && !protDown.length && signals.every(k => sig(k) === 'high' && ['Lcr', 'Ljen', 'Lgas', 'Lin', 'T16S'].includes(k))) primary = 'lactoenrich';
+  else if (signals.length === 1 && signals[0] === 'T16S') primary = 'loadshift';
+  else if (signals.length) primary = 'mixed';
+  const candida = sig('Cand') === 'high' ? 'increase' : sig('Cand') === 'low' ? 'decrease' : (an.per.Cand && an.per.Cand.transition && an.per.Cand.transition.includes('detected now') ? 'newly-detected' : null);
+  return { primary, candida, bvUp, protDown, protUp, signals };
+}
+
+/* =====================================================================
+   DECISION ENGINE  (§11–12) — one engine for manual, CSV, simulated & preset data
+   ===================================================================== */
+class Engine {
+  constructor(astro, cfg, strategy = 'adaptive') {
+    this.a = astro; this.cfg = cfg; this.strategy = strategy;
+    Object.assign(this, {
+      state: 'Baseline', urgent: false, urgentInfo: null, watch: null, bvStreak: 0, bvTaskRaised: false, candTask: false, lastPattern: null,
+      symStreak: 0, lastSymDay: null, symActive: false, symTaskOpen: false, stale: false, staleReason: null, baseline: null, approval: null,
+      lastTestDay: null, lastInvalid: false, nextDue: null, nextKind: null, nextReason: 'Complete baseline collection and authorized baseline review (R0)',
+      tasks: [], log: [], results: {}, order: [], cart: { valid: 0, invalid: 0, triggered: 0 }, cartByDay: [], stateByDay: [], checkins: {}, lastReason: null, curRef: null,
+    });
+  }
+  L(day, rule, msg, extra = {}) { const e = { day, rule, msg, state: this.state, urgent: this.urgent, ref: this.curRef, ...extra }; this.log.push(e); return e; }
+  set(day, ns, rule, msg) { const from = this.state; this.state = ns; const e = this.L(day, rule, msg, { from, to: ns, change: from !== ns }); this.lastReason = e; return e; }
+  task(day, type, rule, text) { this.tasks.push({ id: `${type}-${day}-${this.tasks.length}`, day, type, rule, text, open: true, ref: this.curRef }); }
+  closeTasks(types) { this.tasks.forEach(t => { if (!types || types.includes(t.type)) t.open = false; }); }
+  schedule() {
+    const c = this.cfg;
+    if (!this.baseline) { this.nextDue = null; this.nextKind = null; this.nextReason = 'Complete baseline collection and authorized baseline review (R0)'; return; }
+    const base = this.lastTestDay ?? 0;
+    if (typeof this.strategy === 'number') { this.nextDue = base + this.strategy; this.nextKind = 'routine'; this.nextReason = `Fixed ${this.strategy}-day schedule (benchmark configuration)`; return; }
+    if (this.lastInvalid) { this.nextDue = base + c.invalidRepeat; this.nextKind = 'invalid'; this.nextReason = 'Repeat sample collection after invalid test (R9)'; }
+    else if (this.state === 'Watch') { this.nextDue = base + c.watchRepeat; this.nextKind = 'repeat'; this.nextReason = 'Repeat test within 48 h to confirm or resolve the signal (R1)'; }
+    else if (this.state === 'Monitor' || (this.state === 'Clinical Review' && this.lastPattern && (this.lastPattern.signals.length || this.lastPattern.candida))) { this.nextDue = base + c.monitorInterval; this.nextKind = 'monitor'; this.nextReason = `Increased monitoring: test every ${c.monitorInterval} days`; }
+    else if (base < c.adaptationDays) { this.nextDue = base + c.adaptationInterval; this.nextKind = 'routine'; this.nextReason = 'Initial flight adaptation: weekly molecular assessment'; }
+    else { this.nextDue = base + c.routineInterval; this.nextKind = 'routine'; this.nextReason = `Routine surveillance every ${c.routineInterval} days`; }
+  }
+  process(kind, r) { this.curRef = r.id; const before = this.log.length; this['on' + kind](r); const rules = uniq(this.log.slice(before).map(e => e.rule)); this.curRef = null; return rules; }
+  endDay(d) { this.stateByDay.push({ day: d, state: this.state, urgent: this.urgent }); this.cartByDay.push({ day: d, used: this.cart.valid + this.cart.invalid, invalid: this.cart.invalid }); }
+
+  onEvent(e) {
+    this.stale = true; this.staleReason = e.reason;
+    this.L(e.day, 'R10', `Baseline-changing event: ${e.reason}. Existing baseline flagged for review and preserved; replacement requires an authorized decision.`);
+    this.task(e.day, 'baseline', 'R10', `Baseline review required: ${e.reason}`);
+  }
+  onReview(r) {
+    if (r.type === 'baseline-approve') {
+      this.baseline = r.snapshot; this.approval = r; const wasStale = this.stale; this.stale = false; this.closeTasks(['baseline']);
+      if (this.state === 'Baseline') this.set(r.day, 'Stable', 'R0', `Baseline approved by ${r.by}. Individual reference profile is active; routine surveillance begins.`);
+      else this.L(r.day, wasStale ? 'R10' : 'MR', `Replacement baseline approved by ${r.by}; previous profile preserved in the record.`);
+    } else if (r.type === 'baseline-keep') {
+      this.stale = false; this.closeTasks(['baseline']); this.L(r.day, 'R10', `Reviewer retained the existing baseline after review (${r.by}).`);
+    } else if (r.type === 'clinical-decision') {
+      if (r.clearUrgent && this.urgent) { this.urgent = false; this.closeTasks(['urgent']); this.L(r.day, 'R8', 'Urgent overlay cleared by medical reviewer after assessment.'); }
+      const map = { stable: 'Stable', monitor: 'Monitor', review: 'Clinical Review' };
+      const ns = this.baseline ? map[r.disposition] || this.state : 'Baseline';
+      if (r.disposition !== 'review') { this.closeTasks(['symptom', 'medreview', 'clinical', 'context']); this.symTaskOpen = false; }
+      if (ns === 'Stable') this.watch = null;
+      this.set(r.day, ns, 'MR', `Medical reviewer decision recorded (${r.by}): ${r.disposition === 'stable' ? 'return to routine surveillance' : r.disposition === 'monitor' ? 'continue increased monitoring' : 'remain in Clinical Review'}.`);
+    }
+    this.schedule();
+  }
+  onCheckin(c) {
+    const d = c.day; this.checkins[d] = c;
+    if (c.redFlags && c.redFlags.length) {
+      this.urgent = true; this.urgentInfo = { day: d, flags: c.redFlags };
+      this.L(d, 'R8', `Red-flag symptom reported (${c.redFlags.map(f => (RED_FLAGS.find(x => x[0] === f) || [f, f])[1]).join('; ')}). Seek immediate medical assistance per mission protocol. Not waiting for qPCR.`);
+      this.task(d, 'urgent', 'R8', 'URGENT: immediate medical assistance per mission protocol');
+    }
+    const sev = Math.max(0, ...SYMPTOMS.map(([k]) => (c.symptoms || {})[k] || 0));
+    if (sev > 0) {
+      this.symStreak = this.lastSymDay === d - 1 ? this.symStreak + 1 : (this.lastSymDay === d ? this.symStreak : 1);
+      this.lastSymDay = d; this.symActive = true;
+      const lp = this.lastPattern;
+      if (this.state !== 'Clinical Review' && this.state !== 'Baseline') {
+        if (lp && lp.primary === 'bvlike') this.set(d, 'Clinical Review', 'R5', `Relevant vaginal symptoms (${symptomText(c)}) reported alongside a provisional BV-like pattern candidate. Medical assessment requested. The application does not prescribe treatment.`);
+        else if (lp && (lp.candida === 'increase' || lp.candida === 'newly-detected')) this.set(d, 'Clinical Review', 'R7', `Symptoms (${symptomText(c)}) reported with a recent Candida change — appropriate clinical assessment requested. PCR positivity alone does not establish yeast infection.`);
+        else {
+          if (!this.symTaskOpen) { this.task(d, 'symptom', 'R6', `Symptom assessment: ${symptomText(c)}`); this.symTaskOpen = true; this.L(d, 'R6', `Symptoms reported (${symptomText(c)}) with stable or non-explanatory molecular measurements. Symptoms are not dismissed; symptom-assessment task created. The selected panel cannot exclude all causes of symptoms.`); }
+          if (sev >= this.cfg.symEscSeverity || this.symStreak >= this.cfg.symEscDays) this.set(d, 'Clinical Review', 'R6', `Symptoms meet the configured triage policy (severity ≥ ${SEV[this.cfg.symEscSeverity]} or ≥ ${this.cfg.symEscDays} consecutive days). Medical assessment recommended.`);
+        }
+      } else if (this.state === 'Baseline' && !this.symTaskOpen) { this.task(d, 'symptom', 'R6', `Symptom assessment: ${symptomText(c)}`); this.symTaskOpen = true; this.L(d, 'R6', `Symptoms reported during baseline period (${symptomText(c)}); symptom-assessment task created.`); }
+    } else { this.symStreak = 0; this.symActive = false; }
+    if (num(c.ph) != null && c.ph > 4.5) this.L(d, 'CTX', `Vaginal pH ${fmt(c.ph, 1)} (> 4.5) recorded as contextual information only — one of four Amsel criteria; cannot independently diagnose BV.`);
+    this.schedule();
+  }
+  onTest(t) {
+    const qc = qcTest(t, this.cfg); const res = { id: t.id, day: t.day, qc, stateBefore: this.state, urgentBefore: this.urgent, source: t.source };
+    this.results[t.id] = res; this.order.push(t.id);
+    if (t.day < 0) {
+      this.L(t.day, 'R0', qc.valid ? 'Pre-flight baseline sample recorded.' : 'Pre-flight baseline sample invalid — ' + qc.reasons.join(' '));
+      res.stateAfter = this.state; res.next = { day: this.nextDue, reason: this.nextReason }; return;
+    }
+    const triggered = !!this.nextKind && this.nextKind !== 'routine';
+    res.triggered = triggered; if (qc.valid) this.cart.valid++; else this.cart.invalid++; if (triggered) this.cart.triggered++;
+    this.lastTestDay = t.day;
+    if (!qc.valid) {
+      this.lastInvalid = true; this.L(t.day, 'R9', 'Invalid test — ' + qc.reasons.join(' ') + ' Monitoring state not updated; cartridge counted as consumed.');
+      this.schedule(); res.stateAfter = this.state; res.next = { day: this.nextDue, reason: this.nextReason }; return;
+    }
+    this.lastInvalid = false;
+    if (!this.baseline) { this.L(t.day, 'R0', 'No approved individual baseline — measurements recorded, no individual threshold calculated or implied.'); this.schedule(); res.stateAfter = this.state; res.next = { day: this.nextDue, reason: this.nextReason }; return; }
+    const an = analyzeTest(qc, this.baseline, this.cfg), pat = classify(an, this.cfg); res.an = an; res.pattern = pat; res.provisional = this.stale;
+    if (this.stale) this.L(t.day, 'R10', 'Baseline currently flagged for review — interpretation is provisional.');
+    const sigs = pat.signals, dir = k => an.per[k].signal, names = ks => ks.map(k => TK[k].name + (dir(k) === 'high' ? ' ↑' : ' ↓')).join(', ');
+    if (this.state === 'Clinical Review') this.L(t.day, 'MR', `Result recorded while awaiting medical decision (${sigs.length ? names(sigs) : 'no bacterial signal'}); state remains Clinical Review.`);
+    else if (!sigs.length) {
+      if (this.state === 'Watch') { this.set(t.day, 'Stable', 'R2', 'Repeat measurement returned within individual prediction limits. Original signal recorded as unconfirmed/transient and retained in the history.'); this.watch = null; }
+      else if (this.state === 'Monitor') { this.set(t.day, 'Stable', 'R2', 'Valid measurement returned within individual prediction limits; previously confirmed change no longer present. Returning to routine surveillance.'); this.watch = null; }
+      else this.L(t.day, 'NC', 'All quantifiable targets within individual prediction limits after Holm correction.');
+    } else {
+      const signalMap = Object.fromEntries(sigs.map(k => [k, dir(k)]));
+      if (this.state === 'Stable') { this.watch = signalMap; this.set(t.day, 'Watch', 'R1', `New analytical deviation: ${names(sigs)} outside individual prediction limits (Holm-corrected). Repeat test scheduled. A single deviation does not diagnose disease.`); }
+      else if (this.state === 'Watch') {
+        const conf = Object.keys(this.watch || {}).filter(k => dir(k) === this.watch[k]);
+        if (conf.length) { res.confirmed = conf; this.watch = null; this.set(t.day, 'Monitor', 'R3', `Valid repeat confirms deviation in ${names(conf)}. Change marked confirmed; monitoring frequency increased; related microbial domains evaluated.`); }
+        else { this.watch = signalMap; this.L(t.day, 'R1', `Previous signal not reproduced; new deviation in ${names(sigs)}. Remaining in Watch; repeat scheduled.`); }
+      } else if (this.state === 'Monitor') this.L(t.day, 'R3', `Change persists (${names(sigs)}); remaining in Monitor.`);
+    }
+    if (pat.primary === 'bvlike') {
+      this.bvStreak++;
+      this.L(t.day, 'R4', 'Provisional BV-like microbial pattern — not a diagnosis. Symptoms and context checked; confirmatory testing arranged.');
+      if (this.bvStreak >= 2 && !this.bvTaskRaised) { this.bvTaskRaised = true; this.task(t.day, 'medreview', 'R4', 'Non-urgent medical review: BV-like pattern confirmed on a subsequent valid test'); this.L(t.day, 'R4', 'BV-like pattern confirmed on a subsequent valid test — non-urgent medical-review flag created for the authorized reviewer.'); }
+    } else this.bvStreak = 0;
+    const symRecent = this.symActive && this.lastSymDay != null && t.day - this.lastSymDay <= 1;
+    if (pat.primary === 'bvlike' && symRecent && this.state !== 'Clinical Review') this.set(t.day, 'Clinical Review', 'R5', 'Provisional BV-like pattern with current relevant symptoms — medical assessment requested. No treatment is prescribed.');
+    if (pat.candida === 'increase' || pat.candida === 'newly-detected') {
+      if (symRecent && this.state !== 'Clinical Review') this.set(t.day, 'Clinical Review', 'R7', 'Candida change with current relevant symptoms — appropriate clinical assessment requested. PCR positivity alone does not establish yeast infection.');
+      else {
+        this.L(t.day, 'R7', `Candida ${pat.candida === 'increase' ? 'increase beyond individual limits' : 'newly detected (qualitative)'} without symptoms — recorded and contextualized. No automatic diagnosis, treatment or escalation (≈10–20% of women carry Candida asymptomatically; CDC).`);
+        if (pat.candida === 'increase' && !this.candTask) { this.candTask = true; this.task(t.day, 'context', 'R7', 'Contextual (non-urgent) review: substantial individual Candida change without symptoms'); }
+      }
+    }
+    this.lastPattern = pat; this.schedule(); res.stateAfter = this.state; res.next = { day: this.nextDue, reason: this.nextReason };
+  }
+}
+function symptomText(c) { const s = SYMPTOMS.filter(([k]) => (c.symptoms || {})[k] > 0).map(([k, l]) => `${l.toLowerCase()}: ${SEV[c.symptoms[k]].toLowerCase()}`); return s.join(', ') || 'none'; }
+
+function mergedRecords(a) {
+  return [
+    ...a.tests.map(r => ({ k: 'Test', r })), ...a.checkins.map(r => ({ k: 'Checkin', r })),
+    ...a.events.map(r => ({ k: 'Event', r })), ...a.reviews.map(r => ({ k: 'Review', r })),
+  ].sort((x, y) => x.r.day - y.r.day || x.r.seq - y.r.seq);
+}
+function runEngine(a, cfg, uptoDay, strategy = 'adaptive') {
+  const E = new Engine(a, cfg, strategy); const recs = mergedRecords(a);
+  const minDay = Math.min(-56, ...recs.map(o => o.r.day)); const maxDay = Math.max(uptoDay, ...recs.map(o => o.r.day));
+  let i = 0;
+  for (let d = minDay; d <= maxDay; d++) {
+    while (i < recs.length && recs[i].r.day === d) { const o = recs[i++]; const rules = E.process(o.k, o.r); if (o.k === 'Test' && E.results[o.r.id]) E.results[o.r.id].rules = rules; if (o.k === 'Checkin') o.r._rules = rules; }
+    E.endDay(d);
+  }
+  Object.values(E.results).forEach(res => { res.text = explain(res, a); });
+  return E;
+}
+
+/* ---------- deterministic explanations (§13.6) ---------- */
+function explain(res, a) {
+  const d = res.day; const nx = res.next && res.next.day != null ? ` Next action: Mission Day ${res.next.day} — ${res.next.reason}.` : '';
+  if (d < 0) return `Pre-flight day ${d}: baseline sample ${res.qc.valid ? 'recorded' : 'invalid (' + res.qc.reasons.join(' ') + ')'}. Baseline samples build the individual reference profile; they are not compared with a threshold.`;
+  if (!res.qc.valid) return `Mission Day ${d}: Test invalid — ${res.qc.reasons.join(' ')} The monitoring state was not updated (R9). The cartridge is counted as consumed.${nx}`;
+  if (!res.an) return `Mission Day ${d}: Measurements recorded. No approved individual baseline is available, so no individual threshold was calculated (R0).${nx}`;
+  const parts = [`Mission Day ${d}:`]; const sig = TARGETS.filter(t => res.an.per[t.key].signal);
+  if (!sig.length) parts.push("All quantifiable targets are within the individual's prediction limits after multiple-target correction.");
+  sig.forEach(t => { const p = res.an.per[t.key]; const hi = p.signal === 'high'; parts.push(`${t.name} is ${hi ? 'above' : 'below'} the individual's ${hi ? 'upper' : 'lower'} prediction limit (${fmt(p.x)} vs ${fmt(hi ? p.hi : p.lo)} log10; ${fmtFold(p.fold)} baseline; Holm-adjusted p = ${fmtP(p.padj)}).`); });
+  if (!sig.some(t => t.domain === 'bv')) parts.push('BV-associated markers remain within their expected ranges.');
+  TARGETS.forEach(t => { const p = res.an.per[t.key]; if (p.transition) parts.push(`${t.name}: ${p.transition}.`); });
+  parts.push(`This is classified as: ${PATTERNS[res.pattern.primary].label}.`);
+  if (res.pattern.candida) parts.push('The Candida finding is recorded on the separate fungal pathway and is not a diagnosis of yeast infection.');
+  if (res.provisional) parts.push('Interpretation is provisional because the baseline is flagged for review (R10).');
+  parts.push('No diagnosis is made.');
+  parts.push({ 'Stable': 'Continue the configured monitoring schedule.', 'Watch': 'Arrange a repeat test within 48 hours.', 'Monitor': 'Increase monitoring frequency and review trends.', 'Clinical Review': 'Refer to the authorized medical reviewer. The application does not prescribe treatment.', 'Baseline': 'Continue baseline collection.' }[res.stateAfter]);
+  return parts.join(' ') + nx;
+}
+function notMeaning(res) {
+  const out = ['A statistical deviation is not a diagnosis.', 'Individual prediction limits are statistical thresholds, not clinical disease thresholds.', 'Fold change describes magnitude only; no universal fold-change rule indicates disease.'];
+  if (!res.pattern) return out;
+  if (res.pattern.primary === 'bvlike') out.push('This is not a BV diagnosis. BV is diagnosed clinically (Amsel criteria, Nugent score or a validated BV test).', 'CDC: BV NAAT accuracy in asymptomatic women is not adequately established — asymptomatic deviations do not justify diagnosis or treatment.');
+  if (res.pattern.primary === 'lactoenrich') out.push('An increase in Lactobacillus is not deterioration.');
+  if (res.pattern.candida) out.push('Candida detection without symptoms is not an indication for treatment (CDC).');
+  if (res.pattern.primary === 'stable') out.push('Stable molecular measurements cannot exclude all causes of symptoms (e.g., UTI, STIs).');
+  out.push('L. iners is not classified as harmful or protective.');
+  return out;
+}
+
+/* =====================================================================
+   SIMULATED ASTRONAUTS & SCENARIOS  (§15–16)
+   ===================================================================== */
+const BASE = { Lcr: 7.4, Ljen: 5.6, Lgas: 4.9, Lin: 5.1, Gva: 3.3, Fva: 3.1, Meg: 3.0, BVAB2: 0.8, Cand: 0.6, T16S: 8.1 };
+const BIOSD = { Lcr: 0.18, Ljen: 0.2, Lgas: 0.22, Lin: 0.24, Gva: 0.22, Fva: 0.2, Meg: 0.2, BVAB2: 0.15, Cand: 0.2, T16S: 0.15 };
+const SIM_PARAMS = [
+  ['Individual baseline abundance (log10 copies/reaction)', 'Per-target means (L. crispatus-dominated community), jittered ±0.3 per astronaut', 'Prototype assumption'],
+  ['Within-person biological variation', 'SD 0.15–0.24 log10 per target', 'Prototype assumption'],
+  ['Assay measurement noise', 'SD 0.2 Cq (≈0.06 log10)', 'Prototype assumption'],
+  ['Cq → log10 conversion', 'Cq = m·log10(N) + b, lot-specific m, b', 'Calculated from other parameters'],
+  ['Scenario shifts (e.g., B: +1.5 log10 L. crispatus for 4 days)', 'Exaggerated for demonstration', 'Prototype assumption (illustrative simulation)'],
+  ['Lactobacillus enrichment (F) direction', 'Increase in L. crispatus / L. jensenii', 'Evidence-based direction (Mathyk et al., 2026); magnitude assumed'],
+  ['Inter-individual / temporal variability motivates individual baselines', 'Design choice', 'Evidence-based (Gajer et al., 2012)'],
+  ['Symptom timing', 'Scenario-specific (C: day 66+, D: day 30+)', 'Prototype assumption'],
+  ['Invalid test probability (benchmark)', '3% per test', 'Prototype assumption'],
+  ['pH baseline', '4.0 ± 0.12; C rises by up to 0.9', 'Prototype assumption'],
+];
+const PRESETS = [
+  { id: 'AST-A', scenario: 'A', title: 'Stable microbiome, no symptoms', expect: 'Remains Stable; routine surveillance', age: '35–39', regimen: 'Natural cycle', cycleLen: 28, invalid: { 56: 'hsc' } },
+  { id: 'AST-B', scenario: 'B', title: 'Temporary Lactobacillus increase that resolves', expect: 'Records the change; avoids unnecessary escalation; returns to Stable', age: '40–44', regimen: 'Levonorgestrel IUD', cycleLen: null, illustrative: true },
+  { id: 'AST-C', scenario: 'C', title: 'Persistent BV-like shift followed by symptoms', expect: 'Confirms change, increases monitoring, prompts Clinical Review when symptoms arise', age: '30–34', regimen: 'Continuous combined oral contraceptive (menstrual suppression)', cycleLen: null },
+  { id: 'AST-D', scenario: 'D', title: 'Symptoms despite stable microbial measurements', expect: 'Creates symptom-assessment task; can prompt Clinical Review', age: '45–49', regimen: 'Natural cycle', cycleLen: 30, invalid: { 21: 'iac' }, seed: 2 },
+  { id: 'AST-E', scenario: 'E', title: 'Candida increase without symptoms', expect: 'Records and contextualizes; no automatic diagnosis or treatment', age: '35–39', regimen: 'Etonogestrel implant', cycleLen: null },
+  { id: 'AST-F', scenario: 'F', title: 'Persistent Lactobacillus enrichment without BV-associated increase', expect: 'Treats as neutral enrichment, not harmful deterioration', age: '30–34', regimen: 'Continuous combined oral contraceptive (menstrual suppression)', cycleLen: null },
+];
+const SCEN = {
+  A: { onset: null, affected: [] }, B: { onset: 40, affected: ['Lcr'] }, C: { onset: 50, affected: ['Gva', 'Fva', 'Meg', 'BVAB2', 'Lcr', 'Ljen', 'T16S'], concerning: true },
+  D: { onset: null, affected: [], symptomOnset: 30 }, E: { onset: 35, affected: ['Cand'] }, F: { onset: 36, affected: ['Lcr', 'Ljen', 'Lgas'] },
+};
+function scenarioModel(sc, seed) {
+  const r = rngFor(seed, 'base', sc); const base = {};
+  TARGETS.forEach(t => { base[t.key] = BASE[t.key] + gauss(r) * (['BVAB2', 'Cand'].includes(t.key) ? 0.1 : 0.3); });
+  if (sc === 'E') base.Cand = 2.9 + gauss(r) * 0.1;
+  const ramp = (d, on, len) => clamp((d - on) / len);
+  return {
+    sc, base, sd: { ...BIOSD },
+    shift(d) {
+      if (sc === 'B') return d >= 40 && d <= 43 ? { Lcr: 1.5 } : {};
+      if (sc === 'C') { const k = ramp(d, 50, 8); return { Gva: 2.2 * k, Fva: 2.0 * k, Meg: 1.8 * k, BVAB2: 2.5 * k, Lcr: -1.8 * k, Ljen: -1.0 * k, T16S: 0.3 * k }; }
+      if (sc === 'E') return { Cand: 2.4 * ramp(d, 35, 5) };
+      if (sc === 'F') { const k = ramp(d, 36, 6); return { Lcr: 1.4 * k, Ljen: 1.6 * k, Lgas: 0.8 * k }; }
+      return {};
+    },
+    symptoms(d) {
+      const s = { discharge: 0, odor: 0, itch: 0, burn: 0 };
+      if (sc === 'C' && d >= 66) { s.discharge = d >= 70 ? 2 : 1; s.odor = d >= 68 ? 2 : 1; }
+      if (sc === 'D' && d >= 30) { s.itch = d >= 33 ? 2 : 1; s.burn = d >= 31 ? 1 : 0; }
+      return s;
+    },
+    ph(d, rr) { return Math.round((4.0 + gauss(rr) * 0.12 + (sc === 'C' ? 0.9 * ramp(d, 50, 8) : 0)) * 10) / 10; },
+  };
+}
+function cyclePhase(p, d) {
+  if (!p.cycleLen) return /IUD|implant/i.test(p.regimen) ? 'Irregular / unknown' : 'Suppressed (continuous regimen)';
+  const x = ((d % p.cycleLen) + p.cycleLen) % p.cycleLen;
+  return x < 5 ? 'Menstrual' : x < 13 ? 'Follicular' : x < 16 ? 'Ovulatory' : 'Luteal';
+}
+function simMeasurement(model, day, seed, idx, lot, invalid) {
+  const r = rngFor(seed, 'meas', day, idx); const cvs = ASSAYS['BIOME-SIM-01'].lots[lot].curves; const sh = model.shift(day); const targets = {};
+  TARGETS.forEach(t => {
+    const x = model.base[t.key] + (sh[t.key] || 0) + gauss(r) * model.sd[t.key]; const cv = cvs[t.key]; const noise = gauss(r) * 0.2;
+    targets[t.key] = x < cv.lod ? { status: 'nd', cq: null, log10: null } : { status: 'detected', cq: +(cv.m * x + cv.b + noise).toFixed(2), log10: null };
+  });
+  let hscCq = +(26 + gauss(r) * 0.8).toFixed(2), iac = 'pass';
+  if (invalid === 'hsc') hscCq = 35.4; if (invalid === 'iac') iac = 'inhibited';
+  return { assay: 'BIOME-SIM-01', lot, ntc: 'none', pc: 'pass', hscCq, iac, targets };
+}
+function newAstro(p) {
+  return { id: p.id, code: p.id, scenario: p.scenario || null, title: p.title || 'Manually created astronaut', expect: p.expect || '', simulated: p.simulated !== false, illustrative: !!p.illustrative,
+    ageBand: p.age || '', regimen: p.regimen || '', cycleLen: p.cycleLen ?? null, history: p.history || 'None relevant (simulated)', abx: p.abx || 'None in past 90 days', pregnancy: p.pregnancy || 'Not pregnant',
+    missionStart: p.missionStart || '2026-08-01', diagnoses: p.diagnoses || 'None', modelSeed: p.modelSeed || hashStr(p.id), seq: 0, tests: [], checkins: [], events: [], reviews: [], decisions: [], createdAt: new Date().toISOString() };
+}
+const nseq = a => ++a.seq;
+function addTest(a, day, m, extra = {}) { const t = { id: `${a.id}-T${a.seq + 1}`, seq: nseq(a), day, ...m, notes: extra.notes || '', source: extra.source || 'manual', checklist: extra.checklist || null, enteredAt: new Date().toISOString() }; a.tests.push(t); return t; }
+function addCheckin(a, day, c, source = 'manual') { const r = { id: `${a.id}-C${a.seq + 1}`, seq: nseq(a), day, symptoms: c.symptoms || { discharge: 0, odor: 0, itch: 0, burn: 0 }, redFlags: c.redFlags || [], ph: c.ph ?? null, cycle: c.cycle || 'Not recorded', meds: c.meds || '', notes: c.notes || '', noSymptoms: !!c.noSymptoms, source }; a.checkins.push(r); return r; }
+function addReview(a, day, rv) { const r = { id: `${a.id}-R${a.seq + 1}`, seq: nseq(a), day, ...rv, at: new Date().toISOString() }; a.reviews.push(r); return r; }
+function addEvent(a, day, reason) { const r = { id: `${a.id}-E${a.seq + 1}`, seq: nseq(a), day, reason }; a.events.push(r); return r; }
+const BASELINE_DAYS = [-56, -49, -42, -35, -28, -21, -14, -7];
+
+/** Generates a preset by running the REAL engine day by day: tests occur only when the engine schedules them. */
+function generatePreset(p, cfg, uptoDay, seed = 1) {
+  const a = newAstro(p); a.modelSeed = seed * 7919 + hashStr(p.id); const model = scenarioModel(p.scenario, a.modelSeed);
+  for (const d of BASELINE_DAYS) { addCheckin(a, d, { noSymptoms: true, ph: model.ph(d, rngFor(a.modelSeed, 'ph', d)), cycle: cyclePhase(a, d) }, 'simulated'); addTest(a, d, simMeasurement(model, d, a.modelSeed, 0, 'CAL-2026A'), { source: 'simulated' }); }
+  addReview(a, -1, { type: 'baseline-approve', by: 'Simulated reviewer (preset)', snapshot: computeBaseline(a, cfg), notes: 'Preset baseline approved for demonstration.' });
+  const E = new Engine(a, cfg); mergedRecords(a).forEach(o => E.process(o.k, o.r));
+  for (let d = 1; d <= uptoDay; d++) {
+    const testing = E.nextDue != null && d >= E.nextDue; const sym = model.symptoms(d); const anySym = Object.values(sym).some(v => v > 0);
+    const c = addCheckin(a, d, { symptoms: sym, noSymptoms: !anySym, ph: testing ? model.ph(d, rngFor(a.modelSeed, 'ph', d)) : null, cycle: cyclePhase(a, d) }, 'simulated'); E.process('Checkin', c);
+    if (testing) { const t = addTest(a, d, simMeasurement(model, d, a.modelSeed, 0, 'CAL-2026B', (p.invalid || {})[d]), { source: 'simulated' }); E.process('Test', t); }
+    E.endDay(d);
+  }
+  return a;
+}
+
+/* ---------- benchmark (§12.3, §16) ---------- */
+function simulateMission(sc, seed, strategy, cfg, L) {
+  const p = { id: 'SIM-' + sc, scenario: sc, regimen: 'Simulated', cycleLen: 28 }; const a = newAstro(p); a.modelSeed = seed; const model = scenarioModel(sc, seed);
+  for (const d of BASELINE_DAYS) addTest(a, d, simMeasurement(model, d, seed, 0, 'CAL-2026A'), { source: 'simulated' });
+  addReview(a, 0, { type: 'baseline-approve', by: 'benchmark', snapshot: computeBaseline(a, cfg) });
+  const E = new Engine(a, cfg, strategy); mergedRecords(a).forEach(o => E.process(o.k, o.r)); const testDays = [];
+  for (let d = 1; d <= L; d++) {
+    const sym = model.symptoms(d); E.process('Checkin', { id: 'c' + d, day: d, seq: 0, symptoms: sym, redFlags: [], ph: null });
+    if (E.nextDue != null && d >= E.nextDue) {
+      const inv = rngFor(seed, 'inv', d)() < cfg.invalidProb ? 'hsc' : null;
+      const t = { id: 't' + d, day: d, seq: 0, source: 'simulated', ...simMeasurement(model, d, seed, 0, 'CAL-2026B', inv) };
+      E.process('Test', t); testDays.push(d);
+    }
+    E.endDay(d);
+  }
+  const S = SCEN[sc], fl = E.log.filter(e => e.day >= 1);
+  const affectedSignal = e => { const res = E.results[e.ref]; if (!res || !res.pattern) return false; return [...res.pattern.signals, ...(res.pattern.candida ? ['Cand'] : [])].some(k => S.affected.includes(k)); };
+  const firstSig = S.onset != null ? fl.find(e => (e.rule === 'R1' || e.rule === 'R7') && e.day >= S.onset && affectedSignal(e)) : null;
+  const firstConf = S.onset != null ? fl.find(e => e.rule === 'R3' && e.to === 'Monitor' && e.day >= S.onset && (E.results[e.ref].confirmed || []).some(k => S.affected.includes(k))) : null;
+  const falseAlerts = fl.filter(e => e.rule === 'R1' && (S.onset == null || e.day < S.onset || !affectedSignal(e))).length + (sc !== 'E' ? fl.filter(e => e.rule === 'R7' && e.msg.startsWith('Candida increase')).length : 0);
+  const missed = S.concerning ? !fl.some(e => e.rule === 'R4') : null;
+  const stateDays = {}; E.stateByDay.filter(s => s.day >= 1).forEach(s => { stateDays[s.state] = (stateDays[s.state] || 0) + 1; });
+  return { tests: E.cart.valid + E.cart.invalid, invalid: E.cart.invalid, repeats: E.cart.triggered, delay: firstSig ? firstSig.day - S.onset : null, confDelay: firstConf ? firstConf.day - S.onset : null, detected: !!firstSig, missed, falseAlerts, stateDays, reachedCR: E.stateByDay.some(s => s.state === 'Clinical Review') };
+}
+async function runBenchmark(cfg, onProgress) {
+  const strategies = ['adaptive', 3, 7, 14], scs = ['A', 'B', 'C', 'D', 'E', 'F'], runs = Math.max(1, Math.min(500, cfg.benchRuns | 0)), L = cfg.missionLength | 0;
+  const out = {}; let done = 0; const total = strategies.length * scs.length * runs;
+  for (const sc of scs) for (const st of strategies) {
+    const key = sc + '|' + st; out[key] = [];
+    for (let r = 0; r < runs; r++) { out[key].push(simulateMission(sc, cfg.benchSeed * 100003 + r * 7 + sc.charCodeAt(0) * 1009, st, cfg, L)); done++; if (done % 40 === 0) { onProgress && onProgress(done / total); await new Promise(res => setTimeout(res, 0)); } }
+  }
+  const summ = rs => ({ tests: avg(rs.map(r => r.tests)), invalid: avg(rs.map(r => r.invalid)), repeats: avg(rs.map(r => r.repeats)), delay: median(rs.filter(r => r.delay != null).map(r => r.delay)), confDelay: median(rs.filter(r => r.confDelay != null).map(r => r.confDelay)), detectRate: rs.filter(r => r.detected).length / rs.length, missed: rs[0].missed == null ? null : rs.filter(r => r.missed).length / rs.length, falseAlerts: avg(rs.map(r => r.falseAlerts)), cr: rs.filter(r => r.reachedCR).length / rs.length, stateDays: Object.fromEntries(Object.keys(STATES).map(s => [s, avg(rs.map(r => r.stateDays[s] || 0))])) });
+  const table = {}; strategies.forEach(st => { scs.forEach(sc => { table[sc + '|' + st] = summ(out[sc + '|' + st]); }); table['ALL|' + st] = summ(scs.flatMap(sc => out[sc + '|' + st])); });
+  return { table, strategies, scs, runs, L, seed: cfg.benchSeed, at: new Date().toISOString() };
+}
+
+/* ---------- automated self-test (§16.3, §17) ---------- */
+function runSelfTest(cfg) {
+  const T = []; const add = (group, name, pass, rule, detail = '') => T.push({ group, name, pass: !!pass, rule, detail });
+  const near = (a, b, tol) => Math.abs(a - b) <= tol;
+  // numerical engine
+  const ms = meanSd([1, 2, 3, 4, 5, 6]); add('Statistics', 'Baseline mean & SD (1..6 → 3.5, 1.8708)', near(ms.mean, 3.5, 1e-9) && near(ms.sd, 1.870829, 1e-5), '§9.2', `mean ${ms.mean}, sd ${fmt(ms.sd, 5)}`);
+  add('Statistics', "Student's t CDF (t=2.4469, df=6 → 0.975)", near(tCDF(2.4469, 6), 0.975, 2e-4), '§9.3', fmt(tCDF(2.4469, 6), 5));
+  add('Statistics', 't critical (0.975, df=7 → 2.3646)', near(tInv(0.975, 7), 2.3646, 1e-3), '§9.3', fmt(tInv(0.975, 7), 4));
+  const pl = 5 + tInv(0.975, 7) * 0.2 * Math.sqrt(1 + 1 / 8); add('Statistics', 'Prediction limit (mean 5, sd 0.2, n 8 → 5.5016)', near(pl, 5.5016, 1e-3), '§9.3', fmt(pl, 4));
+  const h = holm([{ key: 'a', p: 0.01 }, { key: 'b', p: 0.04 }, { key: 'c', p: 0.03 }, { key: 'd', p: 0.005 }], 0.05);
+  add('Statistics', 'Holm step-down rejects 2 of 4 (p = .005,.01 | .03 stops)', h.res.d.rejected && h.res.a.rejected && !h.res.c.rejected && !h.res.b.rejected, '§9.4');
+  add('Statistics', 'Fold change from log10 (Δ0.30103 → 2×)', near(Math.pow(10, 0.30103), 2, 1e-4), '§9.5');
+  const cv = { m: -3.32, b: 40 }; add('QC', 'Cq → log10 conversion (Cq 33.36, m −3.32, b 40 → 2.00)', near((33.36 - cv.b) / cv.m, 2, 1e-3), '§7.3');
+  const qn = qcTest({ assay: 'BIOME-SIM-01', lot: 'CAL-2026A', ntc: 'none', pc: 'pass', hscCq: 26, iac: 'pass', targets: { Lcr: { status: 'nd' } } }, cfg);
+  add('QC', 'Non-detect is not recorded as zero', qn.targets.Lcr.status === 'nd' && qn.targets.Lcr.x === null, '§7.4');
+  const qbad = qcTest({ assay: 'BIOME-SIM-01', lot: 'CAL-2026A', ntc: 'amplified', pc: 'pass', hscCq: 26, iac: 'pass', targets: {} }, cfg);
+  add('QC', 'NTC amplification rejects the run', !qbad.valid, '§7.1');
+  const qmis = qcTest({ assay: 'BIOME-SIM-01', lot: 'CAL-2026A', ntc: 'none', pc: 'pass', hscCq: 26, iac: 'pass', targets: { Lcr: { status: 'detected', cq: 15.4, log10: 5.0 } } }, cfg);
+  add('QC', 'Inconsistent Cq vs entered abundance is flagged', qmis.targets.Lcr.status === 'qcfail', '§6.4');
+  // presets via the same engine
+  const P = {}; PRESETS.forEach(p => { const a = generatePreset(p, cfg, 90, p.seed || 1); P[p.scenario] = { a, E: runEngine(a, cfg, 90) }; });
+  const ever = (E, s) => E.stateByDay.some(x => x.state === s); const rules = (E, r) => E.log.filter(e => e.rule === r && e.day >= 1);
+  add('Presets', 'A does not enter Monitor without a concerning change', !ever(P.A.E, 'Monitor') && !ever(P.A.E, 'Clinical Review'), 'R3', `final: ${P.A.E.state}`);
+  add('Presets', 'A invalid test does not update the monitoring state', rules(P.A.E, 'R9').length >= 1 && rules(P.A.E, 'R9').every(e => e.state === 'Stable'), 'R9');
+  const bW = rules(P.B.E, 'R1')[0], bS = rules(P.B.E, 'R2')[0];
+  add('Presets', 'B returns to Stable when the temporary change resolves', !!bW && !!bS && bS.day > bW.day && !ever(P.B.E, 'Monitor') && P.B.E.state === 'Stable', 'R2', bW ? `Watch day ${bW.day} → Stable day ${bS && bS.day}` : 'no signal');
+  const cR5 = P.C.E.log.find(e => e.rule === 'R5' && e.to === 'Clinical Review');
+  add('Presets', 'C reaches Clinical Review after a concerning pattern is accompanied by symptoms', !!cR5 && rules(P.C.E, 'R3').length > 0 && rules(P.C.E, 'R4').length > 0, 'R5', cR5 ? `day ${cR5.day}` : '');
+  const dCR = P.D.E.log.find(e => e.rule === 'R6' && e.to === 'Clinical Review'); const dPrev = dCR && Object.values(P.D.E.results).filter(r => r.day > 0 && r.day <= dCR.day && r.pattern).pop(); const dStable = !!dPrev && !dPrev.pattern.signals.length;
+  add('Presets', 'D can reach Clinical Review despite stable qPCR', !!dCR && dStable, 'R6', dCR ? `day ${dCR.day}` : '');
+  add('Presets', 'E does not escalate on Candida detection alone', rules(P.E.E, 'R7').length > 0 && !ever(P.E.E, 'Clinical Review') && !ever(P.E.E, 'Watch') && !ever(P.E.E, 'Monitor'), 'R7');
+  const fEn = Object.values(P.F.E.results).some(r => r.pattern && r.pattern.primary === 'lactoenrich');
+  add('Presets', 'F is not classified as harmful solely because Lactobacillus increases', fEn && !rules(P.F.E, 'R4').length && !ever(P.F.E, 'Clinical Review'), 'R4');
+  // decision-engine transitions
+  const a2 = JSON.parse(JSON.stringify(P.A.a)); addCheckin(a2, 91, { redFlags: ['pelvic'] }); const E2 = runEngine(a2, cfg, 91);
+  add('Engine', 'Any state → Urgent overlay on red flag', E2.urgent && rules(E2, 'R8').length > 0, 'R8');
+  const a3 = newAstro({ id: 'TST' }); const m3 = scenarioModel('A', 5); BASELINE_DAYS.slice(0, 3).forEach(d => addTest(a3, d, simMeasurement(m3, d, 5, 0, 'CAL-2026A'))); addTest(a3, 3, simMeasurement(m3, 3, 5, 0, 'CAL-2026A'));
+  const E3 = runEngine(a3, cfg, 3); add('Engine', 'Baseline incomplete → remains in Baseline (no threshold implied)', E3.state === 'Baseline' && rules(E3, 'R0').length > 0 && !E3.results[a3.tests[3].id].an, 'R0');
+  const a4 = JSON.parse(JSON.stringify(P.A.a)); addEvent(a4, 91, 'Change in hormonal regimen'); const E4 = runEngine(a4, cfg, 91);
+  add('Engine', 'Baseline-changing event flags baseline; never auto re-baselines', E4.stale && E4.baseline === P.A.E.baseline || (E4.stale && E4.approval && E4.approval.id === P.A.E.approval.id), 'R10');
+  add('Engine', 'Same engine for presets & manual data (preset replay is deterministic)', JSON.stringify(P.C.E.stateByDay) === JSON.stringify(runEngine(P.C.a, cfg, 90).stateByDay), '§4');
+  const sim = simulateMission('A', 11, 'adaptive', cfg, 60), sim2 = simulateMission('A', 11, 'adaptive', cfg, 60);
+  add('Simulation', 'Reproducible random seeds', JSON.stringify(sim) === JSON.stringify(sim2), '§16');
+  return { tests: T, pass: T.filter(t => t.pass).length, total: T.length, at: new Date().toISOString() };
+}
+
+/* =====================================================================
+   PERSISTENCE — IndexedDB (§14.1)
+   ===================================================================== */
+const DB = {
+  db: null, mem: null,
+  open() { return new Promise(res => { try { const rq = indexedDB.open('biome-db', 1); rq.onupgradeneeded = () => { const d = rq.result; d.createObjectStore('astronauts', { keyPath: 'id' }); d.createObjectStore('meta'); }; rq.onsuccess = () => { this.db = rq.result; res(true); }; rq.onerror = () => { this.mem = { astronauts: {}, meta: {} }; res(false); }; } catch (e) { this.mem = { astronauts: {}, meta: {} }; res(false); } }); },
+  req(store, mode, fn) { if (this.mem) return Promise.resolve(fn(null)); return new Promise((res, rej) => { const tx = this.db.transaction(store, mode); const r = fn(tx.objectStore(store)); tx.oncomplete = () => res(r && r.result); tx.onerror = () => rej(tx.error); }); },
+  all(store) { if (this.mem) return Promise.resolve(Object.values(this.mem[store])); return this.req(store, 'readonly', s => s.getAll()); },
+  get(store, key) { if (this.mem) return Promise.resolve(this.mem[store][key]); return this.req(store, 'readonly', s => s.get(key)); },
+  put(store, val, key) { const v = JSON.parse(JSON.stringify(val)); if (this.mem) { this.mem[store][key ?? v.id] = v; return Promise.resolve(); } return this.req(store, 'readwrite', s => key !== undefined ? s.put(v, key) : s.put(v)); },
+  del(store, key) { if (this.mem) { delete this.mem[store][key]; return Promise.resolve(); } return this.req(store, 'readwrite', s => s.delete(key)); },
+  clear(store) { if (this.mem) { this.mem[store] = {}; return Promise.resolve(); } return this.req(store, 'readwrite', s => s.clear()); },
+};
+
+/* =====================================================================
+   APPLICATION STATE & UI
+   ===================================================================== */
+const App = { astros: {}, cfg: { ...DEFAULT_CONFIG }, meta: { currentDay: 75, autoCheckins: true }, sel: 'AST-A', role: 'astronaut', view: 'dashboard', engines: {}, selfTest: null, bench: null, selResult: null, trendTarget: 'Lcr', persistent: true, archiveOpts: { dates: false, cycle: true, meds: false, scope: 'all' } };
+const A = () => App.astros[App.sel];
+const ids = () => Object.keys(App.astros).sort();
+function eng(id = App.sel) { if (!App.astros[id]) return null; if (!App.engines[id]) App.engines[id] = runEngine(App.astros[id], App.cfg, App.meta.currentDay); return App.engines[id]; }
+async function saveAstro(a) { delete App.engines[a.id]; await DB.put('astronauts', a); }
+async function saveMeta() { await DB.put('meta', App.meta, 'meta'); await DB.put('meta', App.cfg, 'cfg'); }
+function dateOf(a, d) { return addDays(a.missionStart || '2026-08-01', d); }
+function totalUsed() { return ids().reduce((s, id) => { const E = eng(id); return s + E.cart.valid + E.cart.invalid; }, 0); }
+function toast(msg) { if (typeof document === 'undefined') return; const t = document.createElement('div'); t.innerHTML = msg; document.getElementById('toast').appendChild(t); setTimeout(() => t.remove(), 5200); }
+function badge(state, urgent) { const s = STATES[state] || STATES.Baseline; return `<span class="state ${s.cls}"><span class="shape" aria-hidden="true">${s.shape}</span>${esc(state)}</span>${urgent ? ' <span class="state s-urgent"><span class="shape" aria-hidden="true">⚠</span>Urgent overlay</span>' : ''}`; }
+const ruleTag = r => `<span class="tag rule" title="${esc(RULES[r] || r)}">${esc(r)}</span>`;
+const qcCell = st => `<span class="qc-${st}">${esc(QC_LABEL[st])}</span>`;
+const evTag = (label, cls) => `<span class="tag ${cls}">${esc(label)}</span>`;
+
+const NAV = [
+  ['Monitor', [['dashboard', '◉', 'Dashboard'], ['profiles', '◎', 'Astronaut profiles'], ['checkin', '✎', 'Daily check-in'], ['test', '⧉', 'Enter test results'], ['trends', '〰', 'Trends & analysis'], ['results', '☰', 'Recommendations']]],
+  ['Clinical', [['review', '✚', 'Medical review & follow-up']]],
+  ['Research', [['archive', '⇩', 'Research archive'], ['bench', '⚙', 'Simulation & benchmarking'], ['nasa', '✦', 'NASA research context'], ['methods', '∑', 'Methods, evidence & limitations']]],
+];
+const LOGO = `<svg width="34" height="34" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="lg" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#4fd1c5"/><stop offset="1" stop-color="#7aa2ff"/></linearGradient></defs><circle cx="32" cy="32" r="29" fill="none" stroke="url(#lg)" stroke-width="3"/><ellipse cx="32" cy="32" rx="29" ry="10" fill="none" stroke="#7aa2ff" stroke-opacity=".55" stroke-width="2" transform="rotate(-28 32 32)"/><circle cx="26" cy="28" r="6" fill="#4fd1c5"/><circle cx="38" cy="36" r="4" fill="#7aa2ff"/><circle cx="35" cy="24" r="2.6" fill="#e7edf7"/><circle cx="25" cy="40" r="2.2" fill="#a78bfa"/></svg>`;
+
+function renderNav() {
+  const st = App.selfTest;
+  document.getElementById('nav').innerHTML = `<div class="brand">${LOGO}<h1>BIOME</h1></div><small class="brandsub"><b>B</b>aseline-<b>I</b>ndividualized <b>O</b>nboard <b>M</b>icrobiome <b>E</b>valuation</small>` +
+    NAV.map(([g, items]) => `<div class="navgrp">${g}</div>` + items.map(([v, i, l]) => `<button class="nav ${App.view === v ? 'on' : ''}" data-act="go" data-v="${v}" ${App.view === v ? 'aria-current="page"' : ''}><span class="ico" aria-hidden="true">${i}</span>${l}</button>`).join('')).join('') +
+    `<div class="selftest-pill">${st ? `<b style="color:${st.pass === st.total ? 'var(--stable)' : 'var(--urgent)'}">Self-test ${st.pass}/${st.total} ${st.pass === st.total ? '✓' : '✗'}</b><br>` : 'Self-test running…<br>'}<span class="tiny">Research &amp; decision-support prototype. Not a clinically validated medical device. All demo records are simulated.</span>${App.persistent ? '' : '<br><span class="tiny" style="color:var(--watch)">IndexedDB unavailable — data held in memory only.</span>'}</div>`;
+}
+function renderTop() {
+  const a = A(); const E = eng();
+  document.getElementById('topbar').innerHTML = `
+  <div class="grp"><label for="astroSel">Astronaut</label><select id="astroSel" data-change="astro">${ids().map(id => `<option value="${id}" ${id === App.sel ? 'selected' : ''}>${esc(id)}${App.astros[id].simulated ? ' (simulated)' : ''}</option>`).join('')}</select></div>
+  <div class="grp"><label>Mission day</label><div class="daybox"><button data-act="day" data-d="-1" aria-label="Previous mission day">◀</button><span aria-live="polite">Day ${App.meta.currentDay} · ${a ? dateOf(a, App.meta.currentDay) : ''}</span><button data-act="day" data-d="1" aria-label="Advance mission day">▶</button></div></div>
+  <div class="grp">${E ? badge(E.state, E.urgent) : ''}</div>
+  <div class="grp"><label>View as</label><div class="seg" role="group" aria-label="Role"><button class="${App.role === 'astronaut' ? 'on' : ''}" data-act="role" data-r="astronaut" aria-pressed="${App.role === 'astronaut'}">Astronaut</button><button class="${App.role === 'reviewer' ? 'on' : ''}" data-act="role" data-r="reviewer" aria-pressed="${App.role === 'reviewer'}">Medical reviewer</button></div></div>
+  <span class="simpill" title="All demonstration records are simulated. No synthetic measurement is an actual NASA measurement.">Simulated data · prototype</span>`;
+  const u = document.getElementById('urgent');
+  if (E && E.urgent) { u.className = 'show'; u.innerHTML = `<span style="font-size:26px" aria-hidden="true">⚠</span><div><strong>URGENT — ${esc(a.code)}: seek immediate medical assistance per the mission medical protocol.</strong><div class="small">Red-flag symptom reported on Mission Day ${E.urgentInfo.day}: ${esc(E.urgentInfo.flags.map(f => (RED_FLAGS.find(x => x[0] === f) || [f, f])[1]).join('; '))}. This does not wait for molecular analysis (R8). The overlay is cleared only by a recorded medical-reviewer decision.</div></div><button class="btn" style="margin-left:auto" data-act="go" data-v="review">Open medical review</button>`; }
+  else { u.className = ''; u.innerHTML = ''; }
+}
+function render() {
+  if (typeof document === 'undefined') return;
+  renderNav(); renderTop();
+  const v = document.getElementById('view'); const fn = VIEWS[App.view] || VIEWS.dashboard;
+  try { v.innerHTML = fn(); } catch (e) { console.error(e); v.innerHTML = `<div class="notice bad"><b>Render error</b> ${esc(e.message)}</div>`; }
+  AFTER[App.view] && AFTER[App.view]();
+}
+
+/* ---------- charts (pure SVG; offline) ---------- */
+function niceStep(raw) { const p = Math.pow(10, Math.floor(Math.log10(raw || 1))); const f = raw / p; return (f < 1.5 ? 1 : f < 3 ? 2 : f < 7 ? 5 : 10) * p; }
+function svgChart(o) {
+  const W = o.w || 860, H = o.h || 250, P = { l: 48, r: 14, t: 14, b: 30 }; const xMin = o.xMin, xMax = o.xMax;
+  let ys = []; o.series.forEach(s => s.pts.forEach(p => { if (p.y != null) ys.push(p.y); })); if (o.band) ys.push(o.band.lo, o.band.hi); if (o.refY != null) ys.push(o.refY);
+  let yMin = o.yMin ?? (ys.length ? Math.floor(Math.min(...ys) - 0.6) : 0), yMax = o.yMax ?? (ys.length ? Math.ceil(Math.max(...ys) + 0.4) : 1); if (yMax - yMin < 1) yMax = yMin + 1;
+  const X = d => P.l + (d - xMin) / ((xMax - xMin) || 1) * (W - P.l - P.r), Y = v => H - P.b - (v - yMin) / (yMax - yMin) * (H - P.t - P.b);
+  let g = ''; const ys2 = niceStep((yMax - yMin) / 5);
+  for (let v = Math.ceil(yMin / ys2) * ys2; v <= yMax + 1e-9; v += ys2) g += `<line class="grid" x1="${P.l}" x2="${W - P.r}" y1="${Y(v)}" y2="${Y(v)}"/><text class="tick" x="${P.l - 6}" y="${Y(v) + 3.5}" text-anchor="end">${+v.toFixed(2)}</text>`;
+  const xs = niceStep((xMax - xMin) / 9); for (let d = Math.ceil(xMin / xs) * xs; d <= xMax; d += xs) g += `<text class="tick" x="${X(d)}" y="${H - P.b + 16}" text-anchor="middle">${d}</text>`;
+  if (o.band) g += `<rect class="band" x="${X(xMin)}" width="${X(xMax) - X(xMin)}" y="${Y(o.band.hi)}" height="${Math.max(1, Y(o.band.lo) - Y(o.band.hi))}"/><line class="mean" x1="${X(xMin)}" x2="${X(xMax)}" y1="${Y(o.band.mean)}" y2="${Y(o.band.mean)}"/><text class="tick" x="${W - P.r - 4}" y="${Y(o.band.hi) - 4}" text-anchor="end">95% individual prediction limits</text>`;
+  if (o.refY != null) g += `<line class="ref" x1="${P.l}" x2="${W - P.r}" y1="${Y(o.refY)}" y2="${Y(o.refY)}"/><text class="tick" x="${P.l + 4}" y="${Y(o.refY) - 4}">${esc(o.refLabel || '')}</text>`;
+  if (xMin < 0 && xMax > 0) g += `<line class="launch" x1="${X(0)}" x2="${X(0)}" y1="${P.t}" y2="${H - P.b}"/><text class="tick" x="${X(0) + 4}" y="${P.t + 9}">Launch</text>`;
+  if (o.today != null) g += `<line x1="${X(o.today)}" x2="${X(o.today)}" y1="${P.t}" y2="${H - P.b}" stroke="#e7edf7" stroke-opacity=".25"/>`;
+  (o.invalid || []).forEach(d => { const x = X(d), y = P.t + 6; g += `<g class="pt" data-tip="Day ${d}: invalid test (QC failure) — no state update, cartridge consumed"><line class="inv" x1="${x - 4}" x2="${x + 4}" y1="${y - 4}" y2="${y + 4}"/><line class="inv" x1="${x - 4}" x2="${x + 4}" y1="${y + 4}" y2="${y - 4}"/></g>`; });
+  o.series.forEach(s => {
+    if (s.type === 'bar') { const bw = Math.max(2, (W - P.l - P.r) / (xMax - xMin + 1) * 0.7); s.pts.forEach(p => { if (!p.y) return; g += `<rect class="pt" data-tip="${esc(p.tip)}" x="${X(p.x) - bw / 2}" width="${bw}" y="${Y(p.y)}" height="${Y(yMin) - Y(p.y)}" fill="${p.color || s.color}" opacity=".85"/>`; }); return; }
+    const line = s.pts.filter(p => p.y != null && p.st !== 'blq' && p.st !== 'nd'); if (line.length > 1 && !s.noLine) g += `<polyline fill="none" stroke="${s.color}" stroke-width="1.8" stroke-opacity=".85" points="${line.map(p => X(p.x) + ',' + Y(p.y)).join(' ')}"/>`;
+    s.pts.forEach(p => {
+      const x = X(p.x); const tip = esc(p.tip || '');
+      if (p.st === 'nd') { const y = Y(yMin) - 6; g += `<path class="pt" data-tip="${tip}" d="M${x} ${y - 5} L${x + 4.5} ${y + 3} L${x - 4.5} ${y + 3} Z" fill="none" stroke="${s.color}" stroke-width="1.4"/>`; }
+      else if (p.y != null) { const y = Y(p.y); const ring = p.flag ? `<circle cx="${x}" cy="${y}" r="7.5" fill="none" stroke="${p.flag === 'high' ? '#ff9347' : '#7aa2ff'}" stroke-width="1.6"/>` : ''; g += `<g class="pt" data-tip="${tip}">${ring}<circle cx="${x}" cy="${y}" r="${p.st === 'blq' ? 3.6 : 3.4}" fill="${p.st === 'blq' ? 'none' : s.color}" stroke="${s.color}" stroke-width="1.5"/></g>`; }
+    });
+  });
+  g += `<text class="axl" x="${P.l}" y="${H - 3}">Mission day</text>`; if (o.yLabel) g += `<text class="axl" transform="translate(11 ${H / 2}) rotate(-90)" text-anchor="middle">${esc(o.yLabel)}</text>`;
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(o.label || 'chart')}">${g}</svg>`;
+}
+function stateStrip(E, from, to) {
+  const days = E.stateByDay.filter(s => s.day >= from && s.day <= to); const n = days.length || 1;
+  return `<div class="strip" role="img" aria-label="Monitoring state over time">${days.map(s => `<div style="flex:1;background:${STATE_COLOR[s.state]};${s.urgent ? 'background-image:repeating-linear-gradient(135deg,#ff4d4f 0 3px,transparent 3px 6px)' : ''}" data-tip="Day ${s.day}: ${s.state}${s.urgent ? ' + Urgent overlay' : ''}"></div>`).join('')}</div><div class="row between tiny dim" style="margin-top:3px"><span>Day ${from}</span><span>Day ${to}</span></div>`;
+}
+const legend = items => `<div class="legend">${items.map(([c, l]) => `<span><i style="background:${c}"></i>${esc(l)}</span>`).join('')}</div>`;
+const markerLegend = `<div class="legend"><span>● valid quantitative</span><span>○ detected, below LOQ</span><span>△ not detected (not zero)</span><span style="color:var(--urgent)">× invalid test</span><span>◯ ring = Holm-significant signal</span></div>`;
+function seriesFor(E, key) {
+  const pts = []; E.order.forEach(id => { const r = E.results[id]; if (!r.qc.valid) return; const q = r.qc.targets[key]; if (q.status === 'missing' || q.status === 'qcfail') return; const p = r.an ? r.an.per[key] : null;
+    pts.push({ x: r.day, y: q.x, st: q.status, flag: p && p.signal, tip: `Day ${r.day} · ${TK[key].name}\n${QC_LABEL[q.status]}${q.x != null ? `\n${fmt(q.x)} log10 copies/rxn` : ''}${q.cq != null ? ` (Cq ${fmt(q.cq)})` : ''}${p && p.quant ? `\nfold ${fmtFold(p.fold)} · p_adj ${fmtP(p.padj)}${p.signal ? ' · SIGNAL ' + p.signal.toUpperCase() : ''}` : ''}` }); });
+  return pts;
+}
+const invalidDays = E => E.order.map(id => E.results[id]).filter(r => !r.qc.valid).map(r => r.day);
+function dataTable(heads, rows) { return `<div class="tablewrap"><table><thead><tr>${heads.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`; }
+function seriesTable(E, keys) {
+  const rows = E.order.map(id => E.results[id]).map(r => [r.day, dateOf(A(), r.day), r.qc.valid ? 'Pass' : '<span class="qc-qcfail">QC failure</span>', ...keys.map(k => { const q = r.qc.targets[k]; const p = r.an && r.an.per[k]; return q.status === 'valid' || q.status === 'blq' ? `${fmt(q.x)}${q.status === 'blq' ? ' (BLQ)' : ''}${p && p.signal ? ` <b class="sig-${p.signal}">${p.signal === 'high' ? '↑' : '↓'}</b>` : ''}` : `<span class="qc-${q.status}">${q.status === 'nd' ? 'ND' : q.status === 'qcfail' ? 'QC fail' : '—'}</span>`; })]);
+  return dataTable(['Day', 'Date', 'Run QC', ...keys.map(k => TK[k].name)], rows);
+}
+
+/* ---------- views ---------- */
+const VIEWS = {}, AFTER = {};
+function tasksFor(E, a) {
+  const t = E.tasks.filter(x => x.open).map(x => ({ ...x }));
+  if (E.nextDue != null && E.nextDue <= App.meta.currentDay) t.unshift({ type: 'test', rule: E.nextKind === 'routine' ? '§12' : (E.nextKind === 'invalid' ? 'R9' : E.nextKind === 'repeat' ? 'R1' : 'R3'), text: `Molecular test due ${E.nextDue < App.meta.currentDay ? `(overdue since day ${E.nextDue})` : 'today'} — ${E.nextReason}`, day: E.nextDue });
+  if (!a.checkins.some(c => c.day === App.meta.currentDay) && App.meta.currentDay >= 1) t.push({ type: 'checkin', rule: '§13.3', text: 'Daily health check-in outstanding for today', day: App.meta.currentDay });
+  if (E.stale) t.push({ type: 'baseline', rule: 'R10', text: `Baseline flagged for review: ${E.staleReason}`, day: null });
+  return t;
+}
+const TASK_ICON = { urgent: '⚠', test: '⧉', checkin: '✎', symptom: '✚', medreview: '✚', context: 'ℹ', baseline: '◌', clinical: '✚' };
+
+VIEWS.dashboard = () => {
+  const a = A(), E = eng(), cd = App.meta.currentDay; const s = STATES[E.state];
+  const reason = [...E.log].reverse().find(e => e.change) || E.lastReason; const tasks = tasksFor(E, a);
+  const used = totalUsed(), rem = App.cfg.cartridges - used; const mine = E.cart.valid + E.cart.invalid;
+  const recent = E.order.map(id => E.results[id]).filter(r => r.day >= 1).slice(-5).reverse();
+  const recentC = a.checkins.filter(c => c.day <= cd).slice(-6).reverse();
+  const key = App.trendTarget;
+  return `
+  <div class="row between"><div><h2>${esc(a.code)} · Mission Day ${cd}</h2><p class="sub">${a.simulated ? `Simulated astronaut — scenario ${esc(a.scenario || '—')}: ${esc(a.title)}${a.illustrative ? ' <span class="tag ev-sim">illustrative exaggerated change</span>' : ''}` : 'Manually created record'} · ${esc(a.regimen || 'regimen not recorded')}</p></div>
+  <div class="row"><button class="btn" data-act="go" data-v="checkin">✎ Daily check-in</button><button class="btn pri" data-act="go" data-v="test">⧉ Enter / simulate test</button></div></div>
+  ${tasks.some(t => t.type === 'test') ? `<div class="notice warn"><b>▲ Test due</b><span>${esc(tasks.find(t => t.type === 'test').text)}</span></div>` : ''}
+  ${E.state === 'Clinical Review' ? `<div class="notice bad"><b>✚ Clinical Review</b><span>Medical assessment by the authorized reviewer is requested. The application does not prescribe treatment.</span></div>` : ''}
+  ${rem <= App.cfg.reserveWarn ? `<div class="notice bad"><b>Cartridge reserve</b><span>Only ${rem} cartridges remain (reserve warning at ${App.cfg.reserveWarn}).</span></div>` : ''}
+  <div class="hero">
+    <div class="card statecard ${s.cls}">
+      <div class="row between"><h3 style="margin:0">Current monitoring state</h3>${reason ? ruleTag(reason.rule) : ''}</div>
+      <div class="row" style="margin:10px 0 6px"><span class="big" style="color:${STATE_COLOR[E.state]}">${STATES[E.state].shape} ${esc(E.state)}</span>${E.urgent ? '<span class="state s-urgent"><span class="shape" aria-hidden="true">⚠</span>Urgent overlay</span>' : ''}</div>
+      <div class="muted small">${esc(s.meaning)} · <b>${esc(s.action)}</b></div>
+      <h4>Why</h4><div>${reason ? `<span class="mono small dim">Day ${reason.day}</span> ${esc(reason.msg)}` : 'No state change yet.'}</div>
+      ${E.stale ? `<div class="notice warn" style="margin-top:10px"><b>R10</b><span>Baseline flagged for review (${esc(E.staleReason)}). Original profile preserved; interpretation provisional.</span></div>` : ''}
+      <h4>Next scheduled action</h4><div>${E.nextDue != null ? `<b>Mission Day ${E.nextDue}</b> <span class="dim">(${dateOf(a, E.nextDue)})</span> — ${esc(E.nextReason)}` : esc(E.nextReason)}</div>
+    </div>
+    <div class="grid g2">
+      <div class="card"><h3>Cartridge inventory</h3><div class="big">${rem}<span class="muted small"> / ${App.cfg.cartridges} remaining</span></div><div class="meter ${rem <= App.cfg.reserveWarn ? 'low' : ''}" style="margin:8px 0"><div style="width:${clamp(rem / App.cfg.cartridges) * 100}%"></div></div><div class="small muted">${a.code}: ${mine} used (${E.cart.valid} valid · ${E.cart.invalid} invalid · ${E.cart.triggered} additional)</div></div>
+      <div class="card"><h3>Outstanding tasks</h3>${tasks.length ? tasks.slice(0, 5).map(t => `<div class="taskitem"><span aria-hidden="true">${TASK_ICON[t.type] || '•'}</span><div class="small">${esc(t.text)} ${ruleTag(t.rule)}</div></div>`).join('') : '<div class="muted small">No outstanding check-ins or review tasks.</div>'}</div>
+      <div class="card spanall tight"><div class="row between"><h3 style="margin:0">State timeline</h3><span class="tiny dim">${legend(Object.entries(STATE_COLOR).map(([l, c]) => [c, l])).replace('class="legend"', 'class="legend" style="margin:0"')}</span></div><div style="margin-top:8px">${stateStrip(E, -56, cd)}</div></div>
+    </div>
+  </div>
+  <div class="grid g3" style="margin-top:16px">
+    <div class="card span2"><div class="row between"><h3 style="margin:0">Longitudinal trend</h3><select data-change="trendTarget" aria-label="Target">${TARGETS.map(t => `<option value="${t.key}" ${t.key === key ? 'selected' : ''}>${t.name}</option>`).join('')}</select></div>${trendBlock(E, key, 260)}</div>
+    <div class="card"><h3>Guided demo for judges</h3><ol class="small" style="padding-left:18px;margin:0;line-height:1.7"><li>Pick astronaut <b>A–F</b> (top bar).</li><li>Inspect her baseline in <a href="#" data-act="go" data-v="review">Medical review</a>.</li><li>Press <b>▶</b> to advance the mission day.</li><li>Record a <a href="#" data-act="go" data-v="checkin">daily check-in</a>.</li><li><a href="#" data-act="go" data-v="test">Simulate or type a qPCR test</a> → watch QC & analysis.</li><li>Read the rule-linked <a href="#" data-act="go" data-v="results">recommendation</a>.</li><li>Compare cartridges in <a href="#" data-act="go" data-v="bench">Benchmarking</a>.</li><li><a href="#" data-act="go" data-v="archive">Export</a> the research record.</li></ol></div>
+  </div>
+  <div class="grid g2" style="margin-top:16px">
+    <div class="card"><h3>Recent test results</h3>${recent.length ? dataTable(['Day', 'QC', 'Pattern', 'State after', 'Rules'], recent.map(r => [`<a href="#" data-act="openres" data-id="${r.id}">${r.day}</a>`, r.qc.valid ? '<span class="qc-valid">Pass</span>' : '<span class="qc-qcfail">Invalid</span>', r.pattern ? esc(PATTERNS[r.pattern.primary].label) + (r.pattern.candida ? ' · Candida ' + r.pattern.candida : '') : '—', badge(r.stateAfter), (r.rules || []).map(ruleTag).join(' ')])) : '<p class="muted">No in-flight tests yet.</p>'}</div>
+    <div class="card"><h3>Recent symptoms & pH</h3>${recentC.length ? dataTable(['Day', 'Symptoms', 'pH', 'Cycle'], recentC.map(c => [c.day, c.redFlags.length ? '<b style="color:var(--urgent)">RED FLAG</b> ' + esc(symptomText(c)) : (symptomText(c) === 'none' ? '<span class="dim">None</span>' : esc(symptomText(c))), c.ph != null ? fmt(c.ph, 1) : '—', esc(c.cycle)])) : '<p class="muted">No check-ins yet.</p>'}</div>
+  </div>`;
+};
+function trendBlock(E, key, h) {
+  const b = E.baseline && E.baseline.targets[key]; let band = null;
+  if (b && b.sufficient) { const se = b.sd * Math.sqrt(1 + 1 / b.n), tc = tInv(1 - App.cfg.alpha / 2, b.n - 1); band = { lo: b.mean - tc * se, hi: b.mean + tc * se, mean: b.mean }; }
+  const pts = seriesFor(E, key);
+  return svgChart({ series: [{ name: TK[key].name, color: COLORS[key], pts }], band, xMin: -60, xMax: App.meta.currentDay + 3, invalid: invalidDays(E), today: App.meta.currentDay, h, yLabel: 'log10 copies/rxn', label: `${TK[key].name} abundance over time with individual prediction limits` }) +
+    markerLegend + (b ? `<div class="tiny dim">Baseline: mean ${fmt(b.mean)} · SD ${fmt(b.sd)} · n = ${b.n}${b.sufficient ? '' : ` — insufficient (< ${App.cfg.baselineMin}) for quantitative trend analysis`}${b.sufficient && b.provisional ? ' · provisional (small baseline)' : ''}. Band shows unadjusted 95% limits; signals use Holm-corrected tests.</div>` : '');
+}
+
+VIEWS.profiles = () => {
+  const rev = App.role === 'reviewer';
+  return `<h2>Astronaut profiles</h2><p class="sub">Coded identifiers only — no names are stored. Each astronaut's records are stored and analyzed separately. ${rev ? '' : 'In astronaut view, other crew members\' health states are hidden (private by default).'}</p>
+  <div class="grid g3">${ids().map(id => { const x = App.astros[id], E = eng(id); return `<div class="card astro-card ${id === App.sel ? 'on' : ''}" data-act="pick" data-id="${id}" tabindex="0" role="button" aria-label="Select ${id}"><div class="row between"><b class="mono">${esc(id)}</b>${rev || id === App.sel ? badge(E.state, E.urgent) : '<span class="pill">private</span>'}</div><div class="small muted" style="margin-top:6px">${x.simulated ? `Scenario ${esc(x.scenario || '—')} · ${esc(x.title)}` : 'Manual record'}</div>${rev || id === App.sel ? `<div class="tiny dim" style="margin-top:4px">${esc(x.expect || '')}</div>` : ''}</div>`; }).join('')}</div>
+  <div class="grid g2" style="margin-top:16px">
+    <div class="card"><h3>Selected profile — ${esc(A().code)}</h3>${profileForm(A(), false)}</div>
+    <div class="card"><h3>Create astronaut profile</h3>${profileForm(null, true)}</div>
+  </div>`;
+};
+function profileForm(a, isNew) {
+  const v = a || { id: '', ageBand: '', regimen: '', cycleLen: '', history: '', abx: '', pregnancy: 'Not pregnant', missionStart: '2026-08-01', diagnoses: '' };
+  return `<form data-form="${isNew ? 'newastro' : 'editastro'}" class="formgrid">
+  ${isNew ? `<label class="f">Coded identifier<input type="text" name="id" required pattern="[A-Za-z0-9\\-]{2,16}" placeholder="AST-G"></label>` : ''}
+  <label class="f">Age band (if protocol permits)<input type="text" name="ageBand" value="${esc(v.ageBand)}" placeholder="35–39"></label>
+  <label class="f">Contraceptive / menstrual-suppression regimen<input type="text" name="regimen" value="${esc(v.regimen)}"></label>
+  <label class="f">Cycle length (days, if applicable)<input type="number" name="cycleLen" min="15" max="60" value="${esc(v.cycleLen ?? '')}"></label>
+  <label class="f">Pregnancy status (protected)<select name="pregnancy">${['Not applicable', 'Not pregnant', 'Pregnant', 'Not disclosed'].map(o => `<option ${o === v.pregnancy ? 'selected' : ''}>${o}</option>`).join('')}</select></label>
+  <label class="f">Mission start date<input type="date" name="missionStart" value="${esc(v.missionStart)}"></label>
+  <label class="f">Recent antibiotic / antifungal use<input type="text" name="abx" value="${esc(v.abx)}"></label>
+  <label class="f" style="grid-column:1/-1">Relevant medical &amp; infection history<input type="text" name="history" value="${esc(v.history)}"></label>
+  <label class="f" style="grid-column:1/-1">Previous diagnoses &amp; treatments<input type="text" name="diagnoses" value="${esc(v.diagnoses)}"></label>
+  <div style="grid-column:1/-1" class="row"><button class="btn pri" type="submit">${isNew ? 'Create profile' : 'Save profile'}</button>${!isNew ? `<button class="btn warn" type="button" data-act="delastro">Delete this astronaut record…</button>` : ''}<span class="tiny dim">${isNew ? 'New astronauts start without a baseline (R0).' : 'Changing regimen, pregnancy status or antibiotic use flags the baseline for review (R10) — it never replaces it automatically.'}</span></div></form>`;
+}
+
+VIEWS.checkin = () => {
+  const a = A(), d = App.meta.currentDay, prev = a.checkins.filter(c => c.day === d).slice(-1)[0];
+  return `<h2>Daily health check-in</h2><p class="sub">${esc(a.code)} · Mission Day ${d} (${dateOf(a, d)}). Descriptive self-reports — not a validated clinical severity score, and never combined into a diagnostic index.</p>
+  ${prev ? `<div class="notice info"><b>Already recorded today</b><span>${esc(symptomText(prev))}${prev.ph != null ? ' · pH ' + fmt(prev.ph, 1) : ''}. A new check-in is added as an additional record.</span></div>` : ''}
+  <div class="grid g3"><div class="card span2"><form data-form="checkin">
+  <div class="row between"><h3 style="margin:0">Symptoms</h3><button class="btn pri" type="button" data-act="nosym">✓ No symptoms today (one tap)</button></div>
+  <div class="symgrid" style="margin-top:12px" role="group" aria-label="Symptom questionnaire">${SYMPTOMS.map(([k, l]) => `<div class="small">${l}</div><div class="radio-seg" style="grid-column:span 4" role="radiogroup" aria-label="${l}">${SEV.map((s, i) => `<label><input type="radio" name="sym_${k}" value="${i}" ${i === 0 ? 'checked' : ''}><span>${s}</span></label>`).join('')}</div>`).join('')}</div>
+  <div class="redbox" style="margin-top:16px"><b style="color:#ffb3b4">⚠ Urgent symptoms (red flags)</b><div class="tiny muted">Triggers an immediate medical-assistance instruction (R8), independent of qPCR. Operational list requires approval by a qualified medical authority.</div>${RED_FLAGS.map(([k, l]) => `<label class="check"><input type="checkbox" name="rf_${k}"> ${l}</label>`).join('')}</div>
+  <div class="formgrid" style="margin-top:14px">
+    <label class="f">Vaginal pH (optional)<input type="number" name="ph" step="0.1" min="3" max="8" placeholder="e.g. 4.2"></label>
+    <label class="f">Menstrual / cycle-phase tag<select name="cycle">${CYCLE_TAGS.map(o => `<option ${o === cyclePhase(a, d) ? 'selected' : ''}>${o}</option>`).join('')}</select></label>
+    <label class="f" style="grid-column:span 2">Relevant medication or health changes<input type="text" name="meds" placeholder="e.g. started antibiotic course"></label>
+  </div>
+  <label class="check"><input type="checkbox" name="baselineEvent"> This is a major change (hormonal regimen, pregnancy, new antibiotic course, significant medical event) — flag baseline for review (R10)</label>
+  <label class="f" style="margin-top:8px">Notes (optional; excluded from research export)<textarea name="notes"></textarea></label>
+  <div class="row" style="margin-top:12px"><button class="btn pri" type="submit">Save check-in &amp; evaluate</button><span class="tiny dim">Stored immediately; the decision engine re-evaluates.</span></div>
+  </form></div>
+  <div class="card"><h3>How symptoms are used</h3><ul class="small" style="padding-left:18px;margin:0;line-height:1.6"><li>Recorded <b>independently</b> of microbial analysis.</li><li>With a provisional BV-like pattern → Clinical Review (${ruleTag('R5')}).</li><li>With stable qPCR → symptom-assessment task; Clinical Review per configured triage policy (${ruleTag('R6')}).</li><li>With a Candida change → clinical assessment (${ruleTag('R7')}).</li><li>pH &gt; 4.5 is contextual only — one of four Amsel criteria (CDC).</li></ul><h4>Contextual hints</h4><div id="hints" class="small muted">Select symptoms to see assessment prompts.</div></div></div>`;
+};
+AFTER.checkin = () => {
+  const f = document.querySelector('form[data-form=checkin]'); if (!f) return;
+  const upd = () => { const v = k => +((f.querySelector(`input[name=sym_${k}]:checked`) || {}).value || 0); const h = []; const E = eng(); const stable = E.lastPattern && E.lastPattern.primary === 'stable';
+    if (v('discharge') || v('odor')) h.push('This symptom pattern can occur with BV.'); if (v('itch') || v('burn')) h.push('This symptom pattern can occur with yeast infection.'); if ((v('discharge') || v('odor') || v('itch') || v('burn')) && stable) h.push('The current microbial panel does not explain these symptoms.');
+    document.getElementById('hints').innerHTML = h.length ? h.map(x => `• ${esc(x)}`).join('<br>') + '<div class="tiny dim" style="margin-top:6px">Prompts for assessment, not diagnoses.</div>' : 'Select symptoms to see assessment prompts.'; };
+  f.addEventListener('change', upd);
+};
+
+VIEWS.test = () => {
+  const a = A(), d = App.meta.currentDay, E = eng();
+  return `<h2>Enter test results</h2><p class="sub">${esc(a.code)} · manual entry, CSV import, or “Simulate instrument” (fills the same fields; anything you type overrides simulated values). All three pass through the same QC → calibration → analysis → decision engine.</p>
+  <form data-form="test"><div class="grid g3">
+  <div class="card"><h3>Sample</h3><div class="formgrid" style="grid-template-columns:1fr 1fr">
+    <label class="f">Mission day<input type="number" name="day" value="${d}" required></label><label class="f">Date<input type="text" value="${dateOf(a, d)}" disabled></label>
+    <label class="f">Assay<select name="assay">${Object.entries(ASSAYS).map(([k, v]) => `<option value="${k}">${esc(k)}</option>`).join('')}<option value="">(none / unknown)</option></select></label>
+    <label class="f">Cartridge &amp; calibration lot<select name="lot">${Object.keys(ASSAYS['BIOME-SIM-01'].lots).map(k => `<option ${k === 'CAL-2026B' ? 'selected' : ''}>${k}</option>`).join('')}</select></label>
+  </div><div class="tiny dim" style="margin-top:6px">${d < 0 ? 'Negative day → pre-flight baseline sample.' : 'In-flight sample — consumes one cartridge (valid or invalid).'} Due: ${E.nextDue != null ? 'day ' + E.nextDue : '—'}</div>
+  <h4>Sample-collection checklist</h4>${['Sterile single-use swab used', 'Sample tube sealed & labelled with coded ID', 'Extraction/reaction kit lot recorded', 'Cartridge loaded in analyzer'].map((l, i) => `<label class="check"><input type="checkbox" name="ck${i}" checked> ${l}</label>`).join('')}</div>
+  <div class="card"><h3>QC controls</h3><div class="formgrid" style="grid-template-columns:1fr 1fr">
+    <label class="f">No-template control<select name="ntc"><option value="none">No amplification</option><option value="amplified">Amplified</option></select></label>
+    <label class="f">Positive control<select name="pc"><option value="pass">Pass</option><option value="fail">Fail</option><option value="na">Not applicable</option></select></label>
+    <label class="f">Human sample control Cq<input type="number" name="hscCq" step="0.01" placeholder="blank = not amplified"></label>
+    <label class="f">Internal amplification control<select name="iac"><option value="pass">Pass</option><option value="inhibited">Inhibition</option><option value="fail">Fail</option></select></label>
+  </div><div class="tiny dim" style="margin-top:6px">Acceptance limits come from the selected (simulated) assay definition — never universal thresholds.</div>
+  <h4>Simulation &amp; import</h4><div class="row"><button class="btn" type="button" data-act="siminst">⚡ Simulate instrument</button><button class="btn" type="button" data-act="siminv">Simulate invalid run</button><button class="btn" type="button" data-act="csvimport">Import CSV…</button><button class="btn sm" type="button" data-act="csvtemplate">CSV template</button></div></div>
+  <div class="card"><h3>Standard curve (selected lot)</h3><div id="curveInfo"></div></div>
+  <div class="card spanall"><h3>Targets</h3><div class="tablewrap" style="max-height:none"><table><thead><tr><th>Target</th><th>Domain</th><th>Detection status</th><th>Cq / Ct</th><th>Quantified log10 copies (optional)</th><th class="num">Calibrated log10 (live)</th></tr></thead><tbody>
+  ${TARGETS.map(t => `<tr><td><b>${t.name}</b><div class="tiny dim">${esc(t.full)}</div></td><td class="small muted">${esc(DOMAINS[t.domain])}</td><td><select name="st_${t.key}"><option value="detected">Detected</option><option value="nd">Not detected</option><option value="missing">Not run</option></select></td><td><input type="number" step="0.01" name="cq_${t.key}" aria-label="${t.name} Cq"></td><td><input type="number" step="0.01" name="lg_${t.key}" aria-label="${t.name} log10"></td><td class="num" id="live_${t.key}">—</td></tr>`).join('')}
+  </tbody></table></div>
+  <label class="f" style="margin-top:10px">Sample &amp; test notes<textarea name="notes"></textarea></label>
+  <div class="row" style="margin-top:12px"><button class="btn pri" type="submit">Submit &amp; analyze</button><span class="tiny dim">After submission you'll see QC, calibrated abundance, baseline comparison, fold difference, statistics, pattern and recommendation.</span></div></div>
+  </div></form>`;
+};
+AFTER.test = () => {
+  const f = document.querySelector('form[data-form=test]'); if (!f) return;
+  const upd = () => { const lot = (ASSAYS[f.elements.assay.value] || { lots: {} }).lots[f.elements.lot.value];
+    document.getElementById('curveInfo').innerHTML = lot ? `<div class="formula">Cq = m · log10(N) + b\nlog10(N) = (Cq − b) / m</div>` + dataTable(['Target', 'm', 'b', 'LOD', 'LOQ'], TARGETS.map(t => { const c = lot.curves[t.key]; return [t.name, c.m, c.b, c.lod, c.loq]; })) + `<div class="tiny dim" style="margin-top:6px">HSC acceptance: Cq ≤ ${lot.hsc.maxCq}. ${evTag('Hypothetical simulated calibration', 'ev-sim')}</div>` : '<div class="notice bad"><b>No calibration</b><span>Calibrated abundance will not be calculated.</span></div>';
+    TARGETS.forEach(t => { const cq = num(f.elements['cq_' + t.key].value), el = document.getElementById('live_' + t.key); el.textContent = lot && cq != null ? fmt((cq - lot.curves[t.key].b) / lot.curves[t.key].m) : '—'; }); };
+  f.addEventListener('input', upd); f.addEventListener('change', upd); upd();
+};
+function fillTestForm(m) {
+  const f = document.querySelector('form[data-form=test]'); if (!f) return;
+  f.elements.assay.value = m.assay; f.elements.lot.value = m.lot; f.elements.ntc.value = m.ntc; f.elements.pc.value = m.pc; f.elements.hscCq.value = m.hscCq ?? ''; f.elements.iac.value = m.iac;
+  TARGETS.forEach(t => { const e = m.targets[t.key] || {}; f.elements['st_' + t.key].value = e.status || 'missing'; f.elements['cq_' + t.key].value = e.cq ?? ''; f.elements['lg_' + t.key].value = e.log10 ?? ''; });
+  f.dispatchEvent(new Event('input'));
+}
+
+VIEWS.trends = () => {
+  const E = eng(), a = A(), cd = App.meta.currentDay, key = App.trendTarget; const xMin = -60, xMax = cd + 3;
+  const grp = (title, keys) => `<div class="card"><h3>${title}</h3>${svgChart({ series: keys.map(k => ({ name: TK[k].name, color: COLORS[k], pts: seriesFor(E, k) })), xMin, xMax, invalid: invalidDays(E), today: cd, h: 230, yLabel: 'log10 copies/rxn', label: title })}${legend(keys.map(k => [COLORS[k], TK[k].name]))}<details><summary>Table view</summary>${seriesTable(E, keys)}</details></div>`;
+  const ck = a.checkins.filter(c => c.day <= cd);
+  const sevPts = ck.map(c => { const s = Math.max(0, ...SYMPTOMS.map(([k]) => c.symptoms[k] || 0)); return { x: c.day, y: s, tip: `Day ${c.day}: ${symptomText(c)}${c.redFlags.length ? ' · RED FLAG' : ''}`, color: c.redFlags.length ? '#ff4d4f' : ['#3ecf8e', '#f5c542', '#ff9347', '#ff4d4f'][s] }; });
+  const phPts = ck.filter(c => c.ph != null).map(c => ({ x: c.day, y: c.ph, st: 'valid', tip: `Day ${c.day}: pH ${fmt(c.ph, 1)}` }));
+  const cart = E.cartByDay.filter(x => x.day >= 0 && x.day <= cd).map(x => ({ x: x.day, y: x.used, st: 'valid', tip: `Day ${x.day}: ${x.used} cartridges used (${x.invalid} invalid)` }));
+  const chg = E.log.filter(e => e.change);
+  return `<h2>Trends &amp; analysis</h2><p class="sub">${esc(a.code)} · individual measurements compared with her own baseline. Color is never the only cue: marker shapes, rings and text labels carry the same information, and every chart has a table view.</p>
+  <div class="card"><div class="row between"><h3 style="margin:0">Individual target with baseline &amp; prediction limits</h3><select data-change="trendTarget" aria-label="Target">${TARGETS.map(t => `<option value="${t.key}" ${t.key === key ? 'selected' : ''}>${t.name}</option>`).join('')}</select></div>${trendBlock(E, key, 280)}<details><summary>Table view</summary>${seriesTable(E, [key])}</details></div>
+  <div class="card" style="margin-top:16px"><h3>Monitoring state over time</h3>${stateStrip(E, -56, cd)}${legend(Object.entries(STATE_COLOR).map(([l, c]) => [c, l]))}<details><summary>Table view (state changes)</summary>${dataTable(['Day', 'From', 'To', 'Rule', 'Reason'], chg.map(e => [e.day, esc(e.from), badge(e.to), ruleTag(e.rule), esc(e.msg)]))}</details></div>
+  <div class="grid g2" style="margin-top:16px">
+    ${grp('Lactobacillus targets', ['Lcr', 'Ljen', 'Lgas', 'Lin'])}
+    ${grp('BV-associated targets', ['Gva', 'Fva', 'Meg', 'BVAB2'])}
+    ${grp('Candida (fungal pathway)', ['Cand'])}
+    ${grp('Total bacterial load (16S)', ['T16S'])}
+    <div class="card"><h3>Symptoms (max self-reported severity)</h3>${svgChart({ series: [{ type: 'bar', color: '#f5c542', pts: sevPts }], xMin: 0, xMax, yMin: 0, yMax: 3, h: 180, today: cd, yLabel: '0 none – 3 severe', label: 'Symptom severity over time' })}<div class="legend"><span>Bar height = highest of the four self-reports (not a score)</span><span style="color:var(--urgent)">red = red flag</span></div><details><summary>Table view</summary>${dataTable(['Day', 'Symptoms', 'Red flags'], ck.filter(c => symptomText(c) !== 'none' || c.redFlags.length).map(c => [c.day, esc(symptomText(c)), esc(c.redFlags.join(', ') || '—')]))}</details></div>
+    <div class="card"><h3>Vaginal pH (contextual)</h3>${svgChart({ series: [{ color: '#a78bfa', pts: phPts }], xMin, xMax, refY: 4.5, refLabel: 'pH 4.5 (Amsel criterion; not diagnostic alone)', h: 180, today: cd, yLabel: 'pH', label: 'Vaginal pH over time' })}<details><summary>Table view</summary>${dataTable(['Day', 'pH'], phPts.map(p => [p.x, fmt(p.y, 1)]))}</details></div>
+    <div class="card spanall"><h3>Cartridge consumption (${esc(a.code)})</h3>${svgChart({ series: [{ color: '#4fd1c5', pts: cart, noLine: false }], xMin: 0, xMax, yMin: 0, invalid: invalidDays(E).filter(d => d > 0), h: 180, today: cd, yLabel: 'cumulative', label: 'Cumulative cartridge consumption' })}<div class="tiny dim">Invalid tests (×) still consume a cartridge.</div></div>
+  </div>`;
+};
+
+VIEWS.results = () => {
+  const E = eng(), a = A(); const list = E.order.map(id => E.results[id]).reverse();
+  const sel = E.results[App.selResult] || list.find(r => r.day >= 1) || list[0];
+  return `<h2>Monitoring recommendations</h2><p class="sub">Every analyzed test has a dedicated, deterministic explanation (inspectable templates — no language model) with the rule IDs responsible.</p>
+  <div class="grid" style="grid-template-columns:minmax(260px,1fr) 2.4fr">
+  <div class="card tight"><h3>Tests</h3><div class="tablewrap" style="max-height:760px"><table><thead><tr><th>Day</th><th>QC</th><th>State after</th></tr></thead><tbody>${list.map(r => `<tr class="click ${sel && r.id === sel.id ? 'sel' : ''}" data-act="openres" data-id="${r.id}" tabindex="0"><td class="mono">${r.day}</td><td>${r.qc.valid ? '<span class="qc-valid">Pass</span>' : '<span class="qc-qcfail">Invalid</span>'}</td><td>${badge(r.stateAfter)}</td></tr>`).join('')}</tbody></table></div></div>
+  <div>${sel ? resultDetail(sel, a, E) : '<div class="card muted">No tests recorded.</div>'}</div></div>`;
+};
+function resultCell(p, r, t) {
+  if (!p) return '—';
+  let s = p.signal ? `<span class="sig-${p.signal}">${p.signal === 'high' ? '▲ above upper limit' : '▼ below lower limit'}</span>`
+    : p.quant ? (p.outside ? '<span class="small">outside unadjusted limit; not significant after Holm</span>' : '<span class="small muted">within limits</span>')
+    : `<span class="tiny dim">${esc(p.reason || '')}</span>`;
+  if (p.transition) s += `<div class="tiny" style="color:var(--watch)">${esc(p.transition)}</div>`;
+  if (r.confirmed && r.confirmed.includes(t.key)) s += '<div class="tiny" style="color:var(--monitor)">confirmed on repeat</div>';
+  return s;
+}
+function resultDetail(r, a, E) {
+  const ev = r.pattern && r.pattern.primary === 'bvlike' ? evTag('Provisional engineering heuristic', 'ev-assume') : '';
+  return `<div class="card"><div class="row between"><div><h3 style="margin:0">Mission Day ${r.day} · ${dateOf(a, r.day)}</h3><div class="tiny dim">Test ${esc(r.id)} · source: ${esc(r.source)}${r.triggered ? ' · additional (triggered) test' : ''}</div></div><div class="row">${badge(r.stateBefore)} → ${badge(r.stateAfter)}</div></div>
+  <div class="notice ${r.qc.valid ? 'ok' : 'bad'}" style="margin-top:12px"><b>QC: ${r.qc.valid ? 'Pass' : 'Rejected'}</b><span>${esc(r.qc.valid ? 'All run/sample controls within (simulated) assay acceptance criteria.' : r.qc.reasons.join(' '))} ${esc(r.qc.warnings.join(' '))}</span></div>
+  <h4>Recommendation</h4><p style="margin:0 0 8px;font-size:14.5px;line-height:1.6">${esc(r.text)}</p>
+  <div class="row">${(r.rules || []).map(x => `${ruleTag(x)} <span class="tiny dim">${esc(RULES[x] || '')}</span>`).join('<br>')}</div>
+  ${r.pattern ? `<h4>Microbial pattern</h4><div><b>${esc(PATTERNS[r.pattern.primary].label)}</b> ${ev}<div class="small muted">${esc(PATTERNS[r.pattern.primary].interp)} · Initial response: ${esc(PATTERNS[r.pattern.primary].resp)}${r.pattern.candida ? ` · Candida pathway: ${esc(r.pattern.candida)}` : ''}</div></div>` : ''}
+  <h4>Quantitative measurements &amp; individual baseline comparison</h4>
+  <div class="tablewrap" style="max-height:none"><table><thead><tr><th>Target</th><th>QC status</th><th class="num">Cq</th><th class="num">log10</th><th class="num">Baseline mean (n)</th><th class="num">Δ log10</th><th class="num">Fold</th><th class="num">Prediction limits</th><th class="num">p raw</th><th class="num">Holm thr / p adj</th><th>Result</th></tr></thead><tbody>
+  ${TARGETS.map(t => { const q = r.qc.targets[t.key], p = r.an && r.an.per[t.key]; return `<tr><td><b>${t.name}</b></td><td><span class="qc-${q.status}" title="${esc(QC_LABEL[q.status])}">${esc(QC_SHORT[q.status])}</span>${q.note ? `<div class="tiny dim">${esc(q.note)}</div>` : ''}</td><td class="num">${fmt(q.cq)}</td><td class="num">${fmt(q.x)}</td><td class="num">${p && p.mean != null ? fmt(p.mean) + ` (${p.n})` : '—'}</td><td class="num">${p && p.quant ? fmt(p.diff) : '—'}</td><td class="num">${p && p.quant ? fmtFold(p.fold) : '—'}</td><td class="num">${p && p.quant ? fmt(p.lo) + ' – ' + fmt(p.hi) : '—'}</td><td class="num">${p && p.quant ? fmtP(p.p) : '—'}</td><td class="num">${p && p.quant ? fmtP(p.holmThr) + ' / ' + fmtP(p.padj) : '—'}</td><td>${resultCell(p, r, t)}</td></tr>`; }).join('')}
+  </tbody></table></div>
+  ${r.an ? `<div class="tiny dim" style="margin-top:6px">Evaluated targets in Holm family: m = ${r.an.m} · α = ${App.cfg.alpha} two-sided (statistical convention, not a clinical threshold) · Assay ${esc(a.tests.find(t => t.id === r.id).assay)} / ${esc(a.tests.find(t => t.id === r.id).lot)}${r.provisional ? ' · <b style="color:var(--watch)">baseline under review — provisional</b>' : ''}</div>` : ''}
+  <div class="grid g2" style="margin-top:12px"><div><h4>What this result does not mean</h4><ul class="small" style="padding-left:18px;margin:0">${notMeaning(r).map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>
+  <div><h4>Evidence &amp; assumption classifications</h4><div class="small" style="line-height:1.9">${evTag("Student's t prediction interval — statistical method", 'ev-stat')} ${evTag('Holm (1979) correction — published method', 'ev-stat')} ${evTag(`Baseline min ${App.cfg.baselineMin} — prototype assumption`, 'ev-assume')} ${evTag('Calibration — simulated hypothetical', 'ev-sim')} ${r.pattern && r.pattern.primary === 'bvlike' ? evTag('BV-like rule — provisional heuristic', 'ev-assume') : ''} ${evTag('Schedule intervals — prototype defaults', 'ev-assume')}</div>
+  <h4>Next action</h4><div>${r.next && r.next.day != null ? `<b>Mission Day ${r.next.day}</b> (${dateOf(a, r.next.day)}) — ${esc(r.next.reason)}` : esc((r.next && r.next.reason) || '—')}</div></div></div></div>`;
+}
+
+VIEWS.review = () => {
+  const a = A(), E = eng(), cd = App.meta.currentDay;
+  if (App.role !== 'reviewer') return `<h2>Medical review &amp; follow-up</h2><div class="card"><p>This interface is for the <b>authorized medical reviewer</b> (e.g., Crew Medical Officer). Medical information is private by default and never sent automatically to other crew members.</p><button class="btn pri" data-act="role" data-r="reviewer">Switch to medical reviewer view</button><p class="tiny dim">Prototype: role switching is not authentication.</p></div>`;
+  const bl = computeBaseline(a, App.cfg); const act = E.baseline; const tasks = tasksFor(E, a);
+  const decisions = a.reviews.filter(r => r.type === 'clinical-decision').slice().reverse();
+  return `<h2>Medical review &amp; follow-up</h2><p class="sub">${esc(a.code)} · Supports the Crew Medical Officer; the application never prescribes treatment. Clinician-entered plans are recorded verbatim.</p>
+  <div class="grid g3">
+  <div class="card span2"><h3>Alerts &amp; open tasks</h3>${tasks.length ? tasks.map(t => `<div class="taskitem"><span aria-hidden="true">${TASK_ICON[t.type] || '•'}</span><div><div>${esc(t.text)} ${ruleTag(t.rule)}</div>${t.day != null ? `<div class="tiny dim">Mission Day ${t.day}</div>` : ''}</div></div>`).join('') : '<p class="muted">No open alerts.</p>'}
+    <h4>Recent decision-engine log</h4><ul class="loglist">${E.log.filter(e => e.day >= -1).slice(-14).reverse().map(e => `<li><span class="mono small dim">Day ${e.day}</span><span>${ruleTag(e.rule)}</span><span class="small">${esc(e.msg)}</span></li>`).join('')}</ul></div>
+  <div class="card"><h3>Current status</h3>${badge(E.state, E.urgent)}<dl class="kv" style="margin-top:10px"><dt>Regimen</dt><dd>${esc(a.regimen)}</dd><dt>Age band</dt><dd>${esc(a.ageBand)}</dd><dt>History</dt><dd>${esc(a.history)}</dd><dt>Antibiotics</dt><dd>${esc(a.abx)}</dd><dt>Pregnancy</dt><dd>${esc(a.pregnancy)}</dd><dt>Diagnoses</dt><dd>${esc(a.diagnoses)}</dd></dl><div class="row" style="margin-top:12px"><button class="btn" data-act="handoff">Generate hand-off report</button></div></div>
+  <div class="card spanall"><div class="row between"><h3 style="margin:0">Individual baseline review</h3><div class="row">${act ? `<span class="pill" style="color:var(--stable)">Active: approved by ${esc(E.approval.by)} (day ${E.approval.day})</span>` : '<span class="pill" style="color:var(--watch)">No approved baseline</span>'}${E.stale ? `<span class="pill" style="color:var(--watch)">Flagged: ${esc(E.staleReason)}</span>` : ''}</div></div>
+    <p class="small muted">Computed from ${bl.nSamples} pre-flight samples (${bl.nValidRuns} valid runs). The approved profile is frozen — flight data are never absorbed into it. ${bl.nSufficient} of ${TARGETS.length} targets have ≥ ${App.cfg.baselineMin} valid quantitative observations.</p>
+    ${bl.warnings.map(w => `<div class="notice warn"><b>Review</b><span>${esc(w)}</span></div>`).join('')}
+    ${dataTable(['Target', 'n valid', 'Mean log10', 'SD', 'Observed range', 'Detected fraction', 'Status', act ? 'Active (approved) mean / SD / n' : ''], TARGETS.map(t => { const b = bl.targets[t.key], o = act && act.targets[t.key]; return [t.name, b.n, fmt(b.mean), fmt(b.sd), b.n ? fmt(b.min) + ' – ' + fmt(b.max) : '—', Math.round(b.detFrac * 100) + '%', b.sufficient ? (b.provisional ? '<span class="qc-blq">Sufficient · provisional (small)</span>' : '<span class="qc-valid">Sufficient</span>') + (b.highVar ? ' <span class="qc-qcfail">high variability</span>' : '') : `<span class="qc-nd">Insufficient — qualitative only</span>`, o ? `${fmt(o.mean)} / ${fmt(o.sd)} / ${o.n}` : '']; }))}
+    <div class="row" style="margin-top:10px"><button class="btn pri" data-act="approvebl" ${bl.nSufficient ? '' : 'disabled'}>${act ? 'Approve replacement baseline (recorded decision)' : 'Approve baseline as active reference'}</button>${E.stale ? '<button class="btn" data-act="keepbl">Keep existing baseline</button>' : ''}${bl.nSamples < 8 ? '<button class="btn" data-act="simbaseline">Simulate pre-flight baseline collection (8 samples)</button>' : ''}<span class="tiny dim">Re-baselining never happens automatically (R10).</span></div></div>
+  <div class="card span2"><h3>Record clinical decision</h3><form data-form="decision"><div class="formgrid">
+    <label class="f" style="grid-column:1/-1">Clinical assessment<textarea name="assessment" placeholder="Symptoms, examination, history reviewed…" required></textarea></label>
+    <fieldset style="grid-column:span 2;border:1px solid var(--line2);border-radius:10px;padding:8px 12px"><legend class="small muted">Amsel criteria (clinical, optional)</legend>${['Homogeneous, thin discharge', 'Clue cells on microscopy', 'Vaginal pH > 4.5', 'Positive whiff test'].map((l, i) => `<label class="check"><input type="checkbox" name="am${i}"> ${l}</label>`).join('')}<div class="tiny dim">≥ 3 of 4 = Amsel diagnosis (CDC). Entered by reviewer only — never inferred from qPCR.</div></fieldset>
+    <label class="f">Nugent score (Gram stain, 0–10, optional)<input type="number" name="nugent" min="0" max="10"></label>
+    <label class="f">Condition-specific testing ordered<select name="testing"><option>None</option><option>Amsel / Nugent / validated BV test</option><option>Microscopy, culture or validated yeast test</option><option>Urinalysis and urine culture</option><option>Pathogen-specific testing</option></select></label>
+    <label class="f">Disposition<select name="disposition"><option value="stable">Return to routine surveillance (Stable)</option><option value="monitor">Continue increased monitoring (Monitor)</option><option value="review">Remain in Clinical Review</option></select></label>
+    <label class="f" style="grid-column:1/-1">Clinician-entered management / treatment plan<textarea name="plan" placeholder="Entered by the clinician. BIOME does not generate treatment."></textarea></label>
+    <label class="f" style="grid-column:1/-1">Follow-up monitoring &amp; outcome<textarea name="outcome"></textarea></label>
+    <label class="check" style="grid-column:1/-1"><input type="checkbox" name="clearUrgent" ${E.urgent ? '' : 'disabled'}> Urgent situation assessed — clear Urgent overlay</label>
+    <label class="f">Reviewer (coded)<input type="text" name="by" value="CMO-1" required></label>
+  </div><div class="row" style="margin-top:10px"><button class="btn pri" type="submit">Record decision (Mission Day ${cd})</button><span class="tiny dim">PCR positivity after treatment is not automatically treatment failure.</span></div></form></div>
+  <div class="card"><h3>Decision history</h3>${decisions.length ? decisions.map(r => `<div class="taskitem"><div><div class="small"><b>Day ${r.day}</b> · ${esc(r.by)} · ${esc({ stable: 'Routine', monitor: 'Increased monitoring', review: 'Remain in review' }[r.disposition])}</div><div class="tiny muted">${esc(r.assessment)}</div>${r.amsel != null ? `<div class="tiny">Amsel ${r.amsel}/4${r.amsel >= 3 ? ' — criteria met (clinical)' : ''}</div>` : ''}${r.nugent != null ? `<div class="tiny">Nugent ${r.nugent} — ${r.nugent <= 3 ? 'Lactobacillus-predominant' : r.nugent <= 6 ? 'Intermediate' : 'Consistent with BV'}</div>` : ''}${r.plan ? `<div class="tiny">Plan: ${esc(r.plan)}</div>` : ''}${r.outcome ? `<div class="tiny">Follow-up: ${esc(r.outcome)}</div>` : ''}</div></div>`).join('') : '<p class="muted small">No decisions recorded.</p>'}</div>
+  </div>`;
+};
+function handoffReport(a, E) {
+  const cd = App.meta.currentDay, last = E.order.map(id => E.results[id]).filter(r => r.day >= 1).slice(-3);
+  const L = [`BIOME STRUCTURED MEDICAL HAND-OFF REPORT  —  SIMULATED RECORD / PROTOTYPE`, `Generated: ${new Date().toISOString()}  ·  Engine ${VERSION}`, `Astronaut (coded): ${a.code}   Mission Day: ${cd} (${dateOf(a, cd)})`, '', `CURRENT STATE: ${E.state}${E.urgent ? '  +  URGENT OVERLAY' : ''}`, `Reason: ${(E.lastReason || {}).msg || '—'} [${(E.lastReason || {}).rule || '—'}]`, `Next action: ${E.nextDue != null ? 'Day ' + E.nextDue + ' — ' : ''}${E.nextReason}`, '', 'PROFILE', `  Regimen: ${a.regimen} | Age band: ${a.ageBand} | Pregnancy: ${a.pregnancy}`, `  History: ${a.history} | Antibiotics: ${a.abx} | Diagnoses: ${a.diagnoses}`, `  Baseline: ${E.approval ? 'approved by ' + E.approval.by + ' (day ' + E.approval.day + ')' : 'not approved'}${E.stale ? ' — FLAGGED: ' + E.staleReason : ''}`, '', 'OPEN TASKS', ...tasksFor(E, a).map(t => `  - [${t.rule}] ${t.text}`), '', 'RECENT TESTS'];
+  last.forEach(r => { L.push(`  Day ${r.day}: QC ${r.qc.valid ? 'pass' : 'FAIL'} | ${r.pattern ? PATTERNS[r.pattern.primary].label : '—'} | ${r.stateBefore} → ${r.stateAfter} | rules ${(r.rules || []).join(', ')}`); if (r.an) TARGETS.forEach(t => { const p = r.an.per[t.key]; if (p.quant) L.push(`      ${t.name.padEnd(16)} ${fmt(p.x)} log10  (baseline ${fmt(p.mean)}±${fmt(p.sd)}, n=${p.n})  fold ${fmtFold(p.fold)}  p_adj ${fmtP(p.padj)}${p.signal ? '  SIGNAL ' + p.signal.toUpperCase() : ''}`); }); });
+  L.push('', 'RECENT SYMPTOMS (last 7 days)'); a.checkins.filter(c => c.day > cd - 7 && c.day <= cd).forEach(c => L.push(`  Day ${c.day}: ${symptomText(c)}${c.redFlags.length ? ' | RED FLAGS: ' + c.redFlags.join(', ') : ''}${c.ph != null ? ' | pH ' + fmt(c.ph, 1) : ''} | ${c.cycle}`));
+  L.push('', 'LIMITATIONS: Research and decision-support prototype; not a clinically validated device. Statistical deviations are not diagnoses. The application does not prescribe treatment.');
+  return L.join('\n');
+}
+
+/* ---------- research archive ---------- */
+const DICT = [['sample_id', 'Pseudonymous sample identifier'], ['subject_code', 'Coded astronaut identifier (pseudonymization, not anonymity)'], ['mission_day', 'Day relative to launch (negative = pre-flight baseline)'], ['collection_date', 'Calendar date (only if enabled; re-identification risk)'], ['phase', 'baseline | flight'], ['sample_type', 'Vaginal swab (simulated)'], ['assay_id', 'Assay identifier'], ['calibration_lot', 'Cartridge/calibration lot'], ['target', 'Microbial target code'], ['qc_status', 'valid | blq | nd | qcfail | missing'], ['cq', 'Original Cq/Ct'], ['log10_copies', 'Calibrated abundance, log10 copies/reaction (null for non-detects — never zero)'], ['lod_log10 / loq_log10', 'Detection & quantification limits'], ['curve_m / curve_b', 'Standard-curve slope and intercept'], ['run_qc', 'pass | fail with reasons'], ['ph', 'Vaginal pH (supplementary)'], ['cycle_phase', 'Cycle metadata (only where consent/protocol permits)'], ['medication_context', 'Only where approved'], ['simulated', 'true for all hackathon records']];
+function buildArchive(opts) {
+  const sel = opts.scope === 'all' ? ids() : [App.sel]; const samples = [], meas = [], assays = {};
+  sel.forEach(id => { const a = App.astros[id]; a.tests.forEach(t => { const q = qcTest(t, App.cfg); const ck = a.checkins.filter(c => c.day === t.day).slice(-1)[0];
+    const s = { sample_id: 'S-' + hashStr(t.id).toString(36).toUpperCase(), subject_code: a.code, mission_day: t.day, phase: t.day < 0 ? 'baseline' : 'flight', sample_type: 'vaginal swab (simulated)', assay_id: t.assay, calibration_lot: t.lot, run_qc: q.valid ? 'pass' : 'fail: ' + q.reasons.join(' '), hsc_cq: num(t.hscCq), iac: t.iac, ntc: t.ntc, pc: t.pc, ph: ck ? ck.ph : null, simulated: !!a.simulated, source: t.source };
+    if (opts.dates) s.collection_date = dateOf(a, t.day); if (opts.cycle && ck) s.cycle_phase = ck.cycle; if (opts.meds && ck) s.medication_context = ck.meds || null; samples.push(s);
+    const lot = ASSAYS[t.assay] && ASSAYS[t.assay].lots[t.lot]; if (lot) assays[t.assay + '/' + t.lot] = { assay_id: t.assay, label: ASSAYS[t.assay].label, calibration_lot: t.lot, units: ASSAYS[t.assay].units, hsc_max_cq: lot.hsc.maxCq, curves: lot.curves, simulated: true };
+    TARGETS.forEach(tg => { const o = q.targets[tg.key]; const c = lot && lot.curves[tg.key]; meas.push({ sample_id: s.sample_id, target: tg.key, target_name: tg.full, qc_status: o.status, cq: o.cq, log10_copies: o.x, lod_log10: c ? c.lod : null, loq_log10: c ? c.loq : null, curve_m: c ? c.m : null, curve_b: c ? c.b : null }); }); }); });
+  return { study: { title: 'BIOME simulated longitudinal vaginal microbiome monitoring (hackathon prototype)', description: 'SIMULATED records generated for NASA Space Apps Challenge 2026. Not a real scientific dataset; not NASA measurements.', osdr_note: 'Organized with OSDR study/sample/assay metadata in mind. No automatic submission; real contribution requires an approved study, consent, de-identification and OSDR curation.', subjects: sel.length, simulated: true }, samples, assays: Object.values(assays), measurements: meas, dataDictionary: Object.fromEntries(DICT), provenance: { software: 'BIOME', version: VERSION, exportedAt: new Date().toISOString(), engine: 'deterministic rules R0–R10; Student t prediction limits; Holm correction', excluded: ['free-text notes', 'names (never stored)', ...(opts.dates ? [] : ['calendar dates']), ...(opts.meds ? [] : ['medication context'])] } };
+}
+function toCSV(arc) { const sm = Object.fromEntries(arc.samples.map(s => [s.sample_id, s])); const cols = ['sample_id', 'subject_code', 'mission_day', ...(App.archiveOpts.dates ? ['collection_date'] : []), 'phase', 'assay_id', 'calibration_lot', 'run_qc', 'target', 'qc_status', 'cq', 'log10_copies', 'lod_log10', 'loq_log10', 'curve_m', 'curve_b', 'ph', ...(App.archiveOpts.cycle ? ['cycle_phase'] : []), ...(App.archiveOpts.meds ? ['medication_context'] : []), 'simulated'];
+  const q = v => v == null ? '' : /[",\n]/.test(String(v)) ? '"' + String(v).replace(/"/g, '""') + '"' : String(v);
+  return [cols.join(','), ...arc.measurements.map(m => { const s = sm[m.sample_id]; return cols.map(c => q(c in m ? m[c] : s[c])).join(','); })].join('\n'); }
+function download(name, text, type = 'application/json') { const b = new Blob([text], { type }); const u = URL.createObjectURL(b); const l = document.createElement('a'); l.href = u; l.download = name; document.body.appendChild(l); l.click(); setTimeout(() => { URL.revokeObjectURL(u); l.remove(); }, 500); }
+VIEWS.archive = () => {
+  const o = App.archiveOpts, arc = buildArchive(o), a = A();
+  const recs = [...a.tests.map(t => ['Test', t]), ...a.checkins.filter(c => c.source !== 'simulated' || c.day === App.meta.currentDay).map(c => ['Check-in', c]), ...a.reviews.map(r => ['Review', r]), ...a.events.map(e => ['Event', e])].sort((x, y) => y[1].day - x[1].day || y[1].seq - x[1].seq).slice(0, 40);
+  return `<h2>Research archive</h2><p class="sub">Structured, de-identified longitudinal records prepared for <i>potential</i> future contribution to NASA's Open Science Data Repository (OSDR). BIOME does not submit automatically and cannot guarantee acceptance.</p>
+  <div class="notice warn"><b>Simulated data</b><span>All hackathon records are simulated and must never be presented as a real scientific dataset or as NASA measurements. Local browser storage is not a certified medical-record system — do not store real identifiable health information.</span></div>
+  <div class="grid g3">
+  <div class="card"><h3>Export</h3><div class="formgrid" style="grid-template-columns:1fr"><label class="f">Scope<select data-change="arcScope"><option value="all" ${o.scope === 'all' ? 'selected' : ''}>All astronauts</option><option value="one" ${o.scope === 'one' ? 'selected' : ''}>${esc(a.code)} only</option></select></label></div>
+    <label class="check"><input type="checkbox" data-change="arcDates" ${o.dates ? 'checked' : ''}> Include calendar dates (re-identification risk)</label><label class="check"><input type="checkbox" data-change="arcCycle" ${o.cycle ? 'checked' : ''}> Include cycle/hormonal metadata (if consent permits)</label><label class="check"><input type="checkbox" data-change="arcMeds" ${o.meds ? 'checked' : ''}> Include medication context (if approved)</label>
+    <div class="row" style="margin-top:10px"><button class="btn pri" data-act="expcsv">⇩ CSV</button><button class="btn pri" data-act="expjson">⇩ JSON (study/sample/assay)</button><button class="btn" data-act="expdict">⇩ Data dictionary</button></div>
+    <div class="small muted" style="margin-top:10px">${arc.samples.length} samples · ${arc.measurements.length} target measurements · ${arc.assays.length} assay/lot definitions</div></div>
+  <div class="card span2"><h3>De-identification preview</h3><div class="small muted" style="margin-bottom:8px">Excluded: ${esc(arc.provenance.excluded.join(' · '))}. Coded identifiers are pseudonymization, not a guarantee of anonymity.</div>${dataTable(Object.keys(arc.samples[0] || { sample_id: 1 }), arc.samples.slice(-6).map(s => Object.values(s).map(v => esc(v == null ? '' : v))))}</div>
+  <div class="card span2"><h3>Data dictionary</h3>${dataTable(['Field', 'Definition'], DICT.map(([k, v]) => [`<span class="mono">${k}</span>`, esc(v)]))}</div>
+  <div class="card"><h3>Backup &amp; restore</h3><p class="small muted">Full local database (all astronauts, configuration, mission day) as a JSON file.</p><div class="row"><button class="btn" data-act="backup">⇩ Backup</button><button class="btn" data-act="restore">⇧ Restore…</button></div><h4>Reset</h4><button class="btn warn" data-act="reset">Reset to demonstration presets…</button></div>
+  <div class="card spanall"><h3>Records — ${esc(a.code)} <span class="tiny dim">(most recent 40; explicit delete)</span></h3>${dataTable(['Type', 'Day', 'ID', 'Summary', 'Source', ''], recs.map(([k, r]) => [k, r.day, `<span class="mono tiny">${esc(r.id)}</span>`, esc(k === 'Test' ? `${r.assay}/${r.lot}` : k === 'Check-in' ? symptomText(r) : k === 'Review' ? r.type : r.reason), esc(r.source || '—'), `<button class="btn sm warn" data-act="delrec" data-k="${k}" data-id="${esc(r.id)}">Delete</button>`]))}</div>
+  </div>`;
+};
+
+/* ---------- benchmarking view ---------- */
+VIEWS.bench = () => {
+  const c = App.cfg, B = App.bench; const stl = st => st === 'adaptive' ? 'Adaptive (BIOME)' : `Fixed every ${st} d`;
+  let res = '';
+  if (B && B.table) {
+    const row = (sc, st) => { const s = B.table[sc + '|' + st]; return [sc === 'ALL' ? '<b>Combined</b>' : `<b>${sc}</b>`, stl(st), fmt(s.tests, 1), fmt(s.invalid, 2), fmt(s.repeats, 1), s.delay == null ? '—' : fmt(s.delay, 0), s.confDelay == null ? '—' : fmt(s.confDelay, 0), (s.detectRate * 100).toFixed(0) + '%', s.missed == null ? 'n/a' : (s.missed * 100).toFixed(0) + '%', fmt(s.falseAlerts, 2), (s.cr * 100).toFixed(0) + '%', Object.keys(STATES).filter(k => k !== 'Baseline').map(k => `${k[0]}${k === 'Clinical Review' ? 'R' : ''}:${fmt(s.stateDays[k], 0)}`).join(' ')]; };
+    const heads = ['Scen.', 'Strategy', 'Tests / mission', 'Invalid', 'Additional tests', 'Days to 1st signal (median)', 'Days to confirmed', 'Change detected', 'Missed concerning pattern', 'False alerts / mission', 'Reached Clin. Review', 'Days in state (S/W/M/CR)'];
+    const W = 860, H = 230, groups = [...B.scs, 'ALL'], bw = 16, gw = (W - 60) / groups.length; let bars = '';
+    const max = Math.max(...groups.flatMap(g => B.strategies.map(s => B.table[g + '|' + s].tests)));
+    const sc = ['#4fd1c5', '#ff9347', '#f5c542', '#7aa2ff'];
+    groups.forEach((g, gi) => { B.strategies.forEach((s, si) => { const v = B.table[g + '|' + s].tests, h = v / max * (H - 50); const x = 50 + gi * gw + si * (bw + 3) + 10; bars += `<rect class="pt" data-tip="${g === 'ALL' ? 'Combined' : 'Scenario ' + g} · ${stl(s)}: ${fmt(v, 1)} tests/mission" x="${x}" y="${H - 28 - h}" width="${bw}" height="${h}" fill="${sc[si]}"/>`; }); bars += `<text class="tick" x="${50 + gi * gw + gw / 2}" y="${H - 10}" text-anchor="middle">${g === 'ALL' ? 'Combined' : 'Scenario ' + g}</text>`; });
+    res = `<div class="card" style="margin-top:16px"><h3>Cartridges per simulated mission</h3><svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Tests per mission by scenario and strategy"><line class="grid" x1="40" x2="${W}" y1="${H - 28}" y2="${H - 28}"/>${bars}</svg>${legend(B.strategies.map((s, i) => [sc[i], stl(s)]))}<div class="tiny dim">${B.runs} missions × ${B.scs.length} scenarios × ${B.strategies.length} strategies · ${B.L} days · seed ${B.seed} · common random numbers (identical measurement noise across strategies).</div></div>
+    <div class="card" style="margin-top:16px"><h3>Detection performance vs resource use</h3><div class="notice info"><b>Trade-off</b><span>A lower cartridge count does not automatically mean the adaptive strategy is better. Results are shown even where adaptive performs worse than a fixed schedule; resource savings are not guaranteed. Simulated trajectories cannot establish real-world sensitivity, specificity or outcomes.</span></div>${dataTable(heads, [...B.scs, 'ALL'].flatMap(sc => B.strategies.map(st => row(sc, st))))}<div class="tiny dim" style="margin-top:6px">Concerning pattern = scenario C (BV-like shift); "missed" = no BV-like pattern candidate (R4) during the mission. False alert = R1 signal in a scenario/period/target without a simulated true change. Additional tests = repeat, monitor-interval and invalid-repeat tests (adaptive only).</div></div>`;
+  }
+  return `<h2>Simulation &amp; benchmarking</h2><p class="sub">Adaptive testing compared with configurable fixed schedules (every 3, 7 and 14 days) across scenarios A–F. Every mission runs through the same QC, statistics and decision engine as manual data. These are benchmark configurations, not medical recommendations.</p>
+  <div class="grid g3"><div class="card"><h3>Run</h3><div class="formgrid" style="grid-template-columns:1fr 1fr"><label class="f">Missions per configuration<input type="number" data-cfg="benchRuns" value="${c.benchRuns}" min="1" max="500"></label><label class="f">Random seed<input type="number" data-cfg="benchSeed" value="${c.benchSeed}"></label><label class="f">Mission length (days)<input type="number" data-cfg="missionLength" value="${c.missionLength}" min="30" max="400"></label><label class="f">Invalid-test probability<input type="number" step="0.01" data-cfg="invalidProb" value="${c.invalidProb}" min="0" max="0.5"></label></div>
+  <div class="row" style="margin-top:12px"><button class="btn pri" data-act="runbench" ${B && B.running ? 'disabled' : ''}>${B && B.running ? 'Running…' : '▶ Run benchmark'}</button></div><div class="progress"><div id="benchprog" style="width:${B && B.running ? (B.p * 100) : B ? 100 : 0}%"></div></div><div class="tiny dim">Default 100 missions is a demonstration setting, not a sample-size requirement.</div></div>
+  <div class="card span2"><h3>Simulation parameters &amp; evidence tags</h3>${dataTable(['Parameter', 'Value', 'Classification'], SIM_PARAMS.map(([p, v, k]) => [esc(p), esc(v), evTag(k, /Evidence/.test(k) ? 'ev-pub' : /Calculated/.test(k) ? 'ev-stat' : 'ev-assume')]))}</div></div>${res}
+  <div class="card" style="margin-top:16px"><h3>Demonstration presets (same engine)</h3>${dataTable(['Astronaut', 'Scenario', 'Expected behavior', 'Current state (engine)'], PRESETS.map(p => [p.id, esc(p.title), esc(p.expect), App.astros[p.id] ? badge(eng(p.id).state, eng(p.id).urgent) : '<span class="dim">deleted</span>']))}</div>`;
+};
+
+/* ---------- NASA research context ---------- */
+VIEWS.nasa = () => `<h2>NASA research context</h2><p class="sub">NASA Human Research Program material establishes the spaceflight-health context for BIOME. It is <b>not</b> used as a source of vaginal qPCR reference ranges or diagnostic thresholds.</p>
+  <div class="notice warn"><b>Data-source distinction</b><span>The prototype uses simulated vaginal microbiome measurements. It does not claim to use a NASA astronaut vaginal-qPCR dataset, and no synthetic measurement is labelled as an actual NASA measurement.</span></div>
+  <div class="grid g3">
+   <div class="card span2"><h3>NASA's five hazards of human spaceflight</h3><div class="grid g2 small">${[['Space radiation', 'Context for whole-body physiological stress during long-duration missions.'], ['Isolation & confinement', 'Limited crew, privacy and medical resources — motivates private-by-default records.'], ['Distance from Earth', 'Communication delays and limited resupply — motivates onboard analysis, offline operation and cartridge management.'], ['Gravity fields', 'Altered gravity: the 2026 parabolic-flight study observed vaginal microbiome changes in four women (Mathyk et al., 2026).'], ['Hostile & closed environments', 'Closed habitats change microbial exposure — relevant to host–microorganism interactions.']].map(([h, d]) => `<div class="card tight"><b>${h}</b><div class="muted">${d}</div></div>`).join('')}</div></div>
+   <div class="card"><h3>Risks of Human Spaceflight</h3><p class="small">NASA's Human Research Program characterizes spaceflight health risks. BIOME connects to the <b>Risk of Host–Microorganism Interactions</b>: NASA notes that microorganisms and microbial communities can change during spaceflight, while the health implications and the relative contributions of microbial changes, virulence and immune changes remain incompletely understood.</p><p class="small muted">These sources establish a research rationale. They do <b>not</b> establish that vaginal microbiome changes during spaceflight cause disease.</p><a class="small" href="https://www.nasa.gov/reference/risk-of-host-microorganism-interactions/" target="_blank" rel="noopener">NASA — Risk of Host–Microorganism Interactions ↗</a></div>
+   <div class="card"><h3>Female-specific research gap</h3><p class="small">A 2024 systematic review found 16 studies on human reproductive health in spaceflight or analogues — only five included female participants (Gimunová et al., 2024). A 2025 commentary identified unanswered questions on reproductive and gynecological health in long-duration flight (Farrell et al., 2025).</p></div>
+   <div class="card"><h3>Ongoing HRP-relevant research</h3><p class="small">Host–microbe interaction research, female astronaut health priorities, and open-science data sharing through NASA's Open Science Data Repository (OSDR). BIOME's research archive prepares study-, sample- and assay-level metadata in that spirit — without claiming submission.</p><a class="small" href="https://www.nasa.gov/reference/osdr-help-tutorials-guidelines-for-data-submission-to-osdr/" target="_blank" rel="noopener">OSDR data-submission guidelines ↗</a></div>
+   <div class="card"><h3>Challenge alignment</h3>${dataTable(['Challenge requirement', 'BIOME implementation'], [['Gather astronaut health indicators', 'pH, symptoms, hormonal context, qPCR'], ['Allow astronauts to assess their health', 'Individual baselines & monitoring states'], ['Help decide what to do', 'Repeat-testing, schedules, medical-review prompts'], ['Display changing information', 'Interactive trend graphs'], ['Explain measurements & risks', 'Methods, evidence & result explanations'], ['Support long-duration missions', 'Offline, local storage, cartridge inventory'], ['Support medical decision-making', 'Reviewer interface & hand-off reports']])}<a class="small" href="https://www.spaceappschallenge.org/2026/challenges/health-monitoring-software/" target="_blank" rel="noopener">NASA Space Apps 2026 challenge ↗</a></div>
+  </div>`;
+
+/* ---------- methods, evidence & limitations ---------- */
+const EVIDENCE = [['Individual prediction interval', "Student's t prediction interval", 'Statistical method', 'ev-stat', 'Prediction-interval method; assumptions documented'], ['Statistical significance', 'Two-sided 0.05', 'Statistical convention', 'ev-stat', 'Conventional level; Holm (1979)'], ['Multiple-target adjustment', 'Holm step-down', 'Published statistical method', 'ev-stat', 'Holm (1979)'], ['Baseline minimum', '6 valid observations per target', 'Prototype assumption', 'ev-assume', 'No validated vaginal-microbiome minimum established'], ['Log10 abundance', 'Assay-specific calibrated copies', 'Measurement method', 'ev-stat', 'MIQE 2.0 (Bustin et al., 2025)'], ['RCV method', 'Analytical + within-person variation', 'Published statistical method', 'ev-stat', 'Fraser (2011) — documented, not combined with prediction limits'], ['BV pH criterion', 'Above 4.5', 'Published clinical criterion', 'ev-pub', 'CDC BV guidelines'], ['Amsel diagnosis', '≥ 3 of 4 criteria', 'Published clinical criterion', 'ev-pub', 'CDC BV guidelines'], ['Nugent categories', '0–3, 4–6, 7–10', 'Published clinical criterion', 'ev-pub', 'CDC BV guidelines'], ['Candida asymptomatic carriage', '≈ 10–20%', 'Published clinical estimate', 'ev-pub', 'CDC VVC guidelines'], ['Hilbert G. vaginalis cutoff', '1.10 × 10^5 copies/reaction', 'Assay-specific published cutoff', 'ev-pub', 'Hilbert et al. (2016) — not transferred'], ['Hilbert A. vaginae cutoff', '1.10 × 10^5 copies/reaction', 'Assay-specific published cutoff', 'ev-pub', 'Hilbert et al. (2016) — not transferred'], ['Hilbert BVAB2 cutoff', '1.00 × 10^3 copies/reaction', 'Assay-specific published cutoff', 'ev-pub', 'Hilbert et al. (2016) — not transferred'], ['Hilbert BIC model cutoff', '0.20 predicted probability (sens 91.8%, spec 95.3%)', 'Assay-specific published result', 'ev-pub', 'Hilbert et al. (2016) — reference only'], ['BV-like pattern rule', '≥ 2 elevated BV-associated + ≥ 1 reduced protective Lactobacillus', 'Provisional engineering heuristic', 'ev-assume', 'Requires prospective validation'], ['Routine / initial / Watch / Monitor intervals', '14 d / 7 d / 48 h / 3 d', 'Prototype operational default', 'ev-assume', 'Not validated clinical intervals'], ['Invalid sample repeat', 'Following day', 'Prototype operational default', 'ev-assume', 'Logistics assumption'], ['Benchmark schedules', '3, 7, 14 days', 'Simulation configuration', 'ev-sim', 'Comparative settings, not clinical standards'], ['Benchmark run count', '100 simulated missions', 'Simulation configuration', 'ev-sim', 'Demonstration setting'], ['Symptom scale', 'None / Mild / Moderate / Severe', 'User-interface design', 'ev-assume', 'Descriptive self-report, not a validated scale'], ['Assay calibration (BIOME-SIM-01)', 'Hypothetical m, b, LOD, LOQ', 'Simulation configuration', 'ev-sim', 'Requires independent assay validation']];
+const LIMITS = ['Long-duration vaginal microbiome data from spaceflight remain limited.', 'The 2026 parabolic-flight study involved only four women and does not establish that its observed changes cause disease or persist in orbit.', 'Vaginal microbiome composition varies naturally within individuals and across cycle phases.', 'Published clinical BV qPCR cutoffs are assay-specific and are not transferred to the proposed panel.', 'CDC guidance does not establish asymptomatic BV NAAT results as a validated basis for diagnosis.', 'Individual prediction limits require appropriate repeated observations and reliable assay-performance data.', 'The provisional BV-like pattern rule is not a validated clinical diagnostic model.', 'The 6-observation baseline floor is a prototype assumption, not a clinical standard.', 'The monitoring schedule is configurable and has not been validated for operational astronaut healthcare.', 'Holm correction controls multiple comparisons within one panel; it does not control cumulative false positives across a whole mission (evaluated in the simulator instead).', 'The application does not independently diagnose or prescribe treatment.', 'The proposed physical testing system is not qualified for operational use in microgravity.', 'The research archive prepares data for potential future submission — not automatic NASA OSDR submission.', 'Local browser storage is not a certified medical-record security system.', 'Simulated health trajectories cannot establish real-world clinical sensitivity, specificity or patient outcomes.'];
+const REFS = [['Gimunová M., et al. (2024). The effect of space travel on human reproductive health: a systematic review. npj Microgravity 10, 10.', 'https://doi.org/10.1038/s41526-024-00351-1'], ['Farrell R. M., et al. (2025). A moonshot for female astronaut health, a win for all astronauts and space exploration. npj Microgravity 11, 38.', 'https://doi.org/10.1038/s41526-025-00495-8'], ['NASA. Risk of Host–Microorganism Interactions.', 'https://www.nasa.gov/reference/risk-of-host-microorganism-interactions/'], ['Mathyk B. A., et al. (2026). Parabolic flight induces site specific microbiome changes in women. Frontiers in Microbiology 17, 1817099.', 'https://doi.org/10.3389/fmicb.2026.1817099'], ['Gajer P., et al. (2012). Temporal Dynamics of the Human Vaginal Microbiota. Sci Transl Med 4(132), 132ra52.', 'https://doi.org/10.1126/scitranslmed.3003605'], ['NASA Space Apps Challenge (2026). Create Health Monitoring Software for Astronauts on Space Missions.', 'https://www.spaceappschallenge.org/2026/challenges/health-monitoring-software/'], ['NASA. OSDR Guidelines for Data Submission.', 'https://www.nasa.gov/reference/osdr-help-tutorials-guidelines-for-data-submission-to-osdr/'], ['NASA. OSDR Frequently Asked Questions.', 'https://science.nasa.gov/reference/osdr-faq/'], ['Bustin S. A., et al. (2025). MIQE 2.0. Clinical Chemistry 71(6), 634–651.', 'https://doi.org/10.1093/clinchem/hvaf043'], ['Hilbert D. W., et al. (2016). Development and Validation of a Highly Accurate Quantitative Real-Time PCR Assay for Diagnosis of Bacterial Vaginosis. J Clin Microbiol 54(4), 1017–1024.', 'https://doi.org/10.1128/JCM.03104-15'], ['CDC. Bacterial Vaginosis — STI Treatment Guidelines.', 'https://www.cdc.gov/std/treatment-guidelines/bv.htm'], ['CDC. Vulvovaginal Candidiasis — STI Treatment Guidelines.', 'https://www.cdc.gov/std/treatment-guidelines/candidiasis.htm'], ['Fraser C. G. (2011). Reference change values. Clin Chem Lab Med 50(5), 807–812.', 'https://doi.org/10.1515/CCLM.2011.733'], ['Holm S. (1979). A Simple Sequentially Rejective Multiple Test Procedure. Scand J Stat 6(2), 65–70.', null]];
+VIEWS.methods = () => {
+  const st = App.selfTest; const c = App.cfg;
+  return `<h2>Methods, evidence &amp; limitations</h2><p class="sub">Every threshold, interval and statistical parameter is traceable and labelled. Prototype assumptions are editable below; changes re-run the engine for all astronauts.</p>
+  <div class="grid g2">
+  <div class="card"><h3>Workflow</h3><ol class="small" style="padding-left:18px;margin:0;line-height:1.7">${['Create/select a coded astronaut profile', 'Establish & review an individual baseline (≥ 6 valid observations per target; reviewer approval required)', 'Collect daily health assessments', 'Enter pH and molecular results (manual, CSV or simulated instrument)', 'Validate test quality (NTC, positive control, human sample control, internal amplification control)', 'Convert Cq to calibrated log10 abundance with the lot-specific standard curve', 'Compare with the individual baseline', 'Identify statistically unusual changes (t prediction limits + Holm)', 'Evaluate microbial patterns and clinical context', 'Assign a monitoring state (rules R0–R10)', 'Generate an explanation and next action', 'Schedule additional testing where required', 'Store results & follow-up information', 'Export structured research data'].map(x => `<li>${x}</li>`).join('')}</ol></div>
+  <div class="card"><h3>Formulas</h3><div class="formula">Calibration:  log10(N) = (Cq − b) / m          [lot-specific m, b; validated linear range only]
+Baseline:     x̄ = Σxᵢ / n ;  s = √( Σ(xᵢ − x̄)² / (n − 1) )
+Prediction:   t = (x_new − x̄) / ( s · √(1 + 1/n) ),  df = n − 1
+              p_raw = 2 · [1 − T_CDF(|t|, df)]
+Limits:       x̄ ± t_crit(0.975, df) · s · √(1 + 1/n)
+Holm:         reject p_(k) while p_(k) ≤ α / (m − k + 1)
+Fold change:  10^(x_new − x̄)
+RCV (ref.):   √2 · Z · √(CV_A² + CV_I²), Z = 1.96   [documented; not combined with prediction limits]</div>
+  <p class="small muted"><b>Assumptions:</b> baseline measurements are representative, approximately independent, stable over the baseline period and approximately normal on the log10 scale. If not met, results are labelled provisional/insufficient. Raw Cq values are never compared as linear quantities; targets are never summed without validated normalization; non-detects are never zero and censored values are never imputed for fold changes. If the baseline SD already includes assay error, analytical variation is not added again.</p></div>
+  <div class="card spanall"><h3>Configuration (editable prototype assumptions)</h3><div class="tablewrap" style="max-height:none"><table><thead><tr><th>Parameter</th><th>Value</th><th>Classification</th><th>Source / justification</th></tr></thead><tbody>${Object.entries(CONFIG_META).map(([k, [l, cls, tc, src]]) => `<tr><td>${esc(l)}</td><td>${k === 'iacPolicy' ? `<select data-cfg="${k}"><option ${c[k] === 'reject' ? 'selected' : ''}>reject</option><option ${c[k] === 'flag' ? 'selected' : ''}>flag</option></select>` : `<input type="number" step="any" data-cfg="${k}" value="${c[k]}">`}</td><td>${evTag(cls, tc)}</td><td class="small muted">${esc(src)}</td></tr>`).join('')}</tbody></table></div><div class="row" style="margin-top:8px"><button class="btn" data-act="resetcfg">Restore defaults</button><span class="tiny dim">A parameter is never presented as clinically established unless its source and population support that use.</span></div></div>
+  <div class="card spanall"><h3>Evidence, assumptions &amp; configuration register</h3>${dataTable(['Parameter', 'Value or method', 'Classification', 'Source or justification'], EVIDENCE.map(([p, v, k, t, s]) => [esc(p), esc(v), evTag(k, t), esc(s)]))}<p class="small muted" style="margin-top:8px">Hilbert et al. (2016) values belong to that study's assays, units and population and are shown as a scientific comparison only. The published BIC model is not implemented: it requires separately measured Megasphaera phylotypes 1 & 2 and compatible copies-per-reaction data, and its published notation (log-odds vs odds) needs independent verification.</p></div>
+  <div class="card"><h3>Automated self-test ${st ? `<span class="tag" style="color:${st.pass === st.total ? 'var(--stable)' : 'var(--urgent)'}">${st.pass}/${st.total} passing</span>` : ''}</h3>${st ? dataTable(['Group', 'Check', 'Rule', 'Result'], st.tests.map(t => [esc(t.group), esc(t.name) + (t.detail ? `<div class="tiny dim">${esc(t.detail)}</div>` : ''), ruleTag(t.rule), t.pass ? '<span class="qc-valid">✓ Pass</span>' : '<span class="qc-qcfail">✗ Fail</span>'])) : 'Running…'}<div class="row" style="margin-top:8px"><button class="btn" data-act="selftest">Re-run self-test</button></div></div>
+  <div class="card"><h3>Important limitations</h3><ul class="small" style="padding-left:18px;margin:0;line-height:1.6">${LIMITS.map(l => `<li>${esc(l)}</li>`).join('')}</ul><h4>Physical workflow (proposed, not built)</h4><p class="small muted">Self-collected sterile swab → sealed tube → extraction/reaction kit → disposable qPCR cartridge with target-specific primers & probes → compact real-time PCR analyzer → Cq values to the onboard computer; supplementary pH strip. Requires validation of microgravity collection, containment, liquid handling, reagent storage, waste, instrument reliability and crew workload. Not flight-qualified.</p></div>
+  <div class="card spanall"><h3>References</h3><ol class="small" style="padding-left:18px;margin:0;line-height:1.7">${REFS.map(([t, u]) => `<li>${esc(t)} ${u ? `<a href="${u}" target="_blank" rel="noopener">${esc(u)}</a>` : ''}</li>`).join('')}</ol></div>
+  </div>`;
+};
+
+/* ---------- actions ---------- */
+async function seedPresets() {
+  await DB.clear('astronauts'); App.astros = {}; App.meta = { currentDay: 75, autoCheckins: true };
+  for (const p of PRESETS) { const a = generatePreset(p, App.cfg, App.meta.currentDay, p.seed || 1); App.astros[a.id] = a; await DB.put('astronauts', a); }
+  App.sel = 'AST-A'; App.engines = {}; await saveMeta();
+}
+function formObj(f) { const o = {}; new FormData(f).forEach((v, k) => { o[k] = v; }); return o; }
+const ACT = {
+  go: el => { App.view = el.dataset.v; if (typeof window !== 'undefined') window.scrollTo(0, 0); render(); const v = document.getElementById('view'); v && v.focus({ preventScroll: true }); },
+  pick: el => { App.sel = el.dataset.id; App.selResult = null; render(); },
+  role: el => { App.role = el.dataset.r; render(); },
+  day: async el => {
+    const d = +el.dataset.d; const nd = App.meta.currentDay + d; if (nd < -60) return;
+    if (d > 0 && App.meta.autoCheckins) for (const id of ids()) { const a = App.astros[id]; if (a.simulated && a.scenario && !a.checkins.some(c => c.day === nd)) { const m = scenarioModel(a.scenario, a.modelSeed); const s = m.symptoms(nd); addCheckin(a, nd, { symptoms: s, noSymptoms: !Object.values(s).some(Boolean), cycle: cyclePhase(a, nd) }, 'simulated'); await saveAstro(a); } }
+    App.meta.currentDay = nd; App.engines = {}; await saveMeta(); render();
+    const E = eng(); if (E.nextDue != null && E.nextDue === nd) toast(`▲ ${A().code}: molecular test due today — ${esc(E.nextReason)}`);
+  },
+  nosym: async () => { const a = A(); const before = eng().state; const c = addCheckin(a, App.meta.currentDay, { noSymptoms: true, cycle: cyclePhase(a, App.meta.currentDay) }); await saveAstro(a); const E = eng(); toast(`✓ Check-in saved: no symptoms. State: <b>${E.state}</b>${before !== E.state ? ` (was ${before})` : ''}.`); App.view = 'dashboard'; render(); },
+  siminst: () => { const a = A(), f = document.querySelector('form[data-form=test]'); const d = num(f.elements.day.value) ?? App.meta.currentDay; const m = scenarioModel(a.scenario || 'A', a.modelSeed); fillTestForm(simMeasurement(m, d, a.modelSeed, 100 + a.tests.filter(t => t.day === d).length, f.elements.lot.value || 'CAL-2026B')); App._simFilled = true; toast('⚡ Simulated instrument values loaded into the form. Edit any field to override, then submit.'); },
+  siminv: () => { const a = A(), f = document.querySelector('form[data-form=test]'); const d = num(f.elements.day.value) ?? App.meta.currentDay; const m = scenarioModel(a.scenario || 'A', a.modelSeed); fillTestForm(simMeasurement(m, d, a.modelSeed, 200 + a.tests.length, f.elements.lot.value || 'CAL-2026B', 'hsc')); App._simFilled = true; toast('Simulated run with a failed human sample control loaded.'); },
+  csvtemplate: () => { const h = ['mission_day', 'assay', 'lot', 'ntc', 'pc', 'hsc_cq', 'iac', ...TARGETS.flatMap(t => [t.key + '_status', t.key + '_cq', t.key + '_log10']), 'notes']; const a = A(); const m = simMeasurement(scenarioModel(a.scenario || 'A', a.modelSeed), App.meta.currentDay, a.modelSeed, 999, 'CAL-2026B'); const r = [App.meta.currentDay, m.assay, m.lot, m.ntc, m.pc, m.hscCq, m.iac, ...TARGETS.flatMap(t => [m.targets[t.key].status, m.targets[t.key].cq ?? '', '']), 'example simulated row']; download('biome_qpcr_template.csv', h.join(',') + '\n' + r.join(',') + '\n', 'text/csv'); },
+  csvimport: () => pickFile('.csv,text/csv', async txt => { const a = A(); const lines = txt.trim().split(/\r?\n/); const h = lines[0].split(',').map(s => s.trim()); let n = 0, last = null; for (const ln of lines.slice(1)) { if (!ln.trim()) continue; const v = ln.split(','); const g = k => { const i = h.indexOf(k); return i < 0 ? '' : (v[i] || '').trim(); }; const day = num(g('mission_day')); if (day == null) continue; const m = { assay: g('assay'), lot: g('lot'), ntc: g('ntc') || 'none', pc: g('pc') || 'pass', hscCq: num(g('hsc_cq')), iac: g('iac') || 'pass', targets: {} }; TARGETS.forEach(t => { m.targets[t.key] = { status: g(t.key + '_status') || 'missing', cq: num(g(t.key + '_cq')), log10: num(g(t.key + '_log10')) }; }); last = addTest(a, day, m, { source: 'csv', notes: g('notes') }); n++; } await saveAstro(a); toast(`Imported ${n} test(s) from CSV through the standard QC & analysis pipeline.`); if (last) { App.selResult = last.id; App.view = 'results'; } render(); }),
+  openres: el => { App.selResult = el.dataset.id; App.view = 'results'; render(); },
+  handoff: () => { const a = A(), E = eng(); const txt = handoffReport(a, E); document.getElementById('view').insertAdjacentHTML('afterbegin', `<div class="card" style="margin-bottom:16px"><div class="row between"><h3 style="margin:0">Structured medical hand-off report</h3><div class="row"><button class="btn" data-act="dlhandoff">⇩ Download .txt</button><button class="btn" onclick="window.print()">Print</button></div></div><pre class="report" id="handofftxt">${esc(txt)}</pre></div>`); },
+  dlhandoff: () => download(`BIOME_handoff_${A().code}_day${App.meta.currentDay}.txt`, handoffReport(A(), eng()), 'text/plain'),
+  approvebl: async () => { const a = A(); const snap = computeBaseline(a, App.cfg); if (!snap.nSufficient) return; const by = (prompt('Reviewer (coded) approving this baseline:', 'CMO-1') || '').trim(); if (!by) return; addReview(a, App.meta.currentDay, { type: 'baseline-approve', by, snapshot: snap, notes: 'Approved in reviewer interface' }); await saveAstro(a); toast(`Baseline approved by ${esc(by)} and frozen as the reference profile.`); render(); },
+  keepbl: async () => { const a = A(); addReview(a, App.meta.currentDay, { type: 'baseline-keep', by: 'CMO-1' }); await saveAstro(a); toast('Existing baseline retained (recorded decision).'); render(); },
+  simbaseline: async () => { const a = A(); const m = scenarioModel(a.scenario || 'A', a.modelSeed); BASELINE_DAYS.forEach(d => { if (!a.tests.some(t => t.day === d)) { addCheckin(a, d, { noSymptoms: true, ph: m.ph(d, rngFor(a.modelSeed, 'ph', d)), cycle: cyclePhase(a, d) }, 'simulated'); addTest(a, d, simMeasurement(m, d, a.modelSeed, 0, 'CAL-2026A'), { source: 'simulated' }); } }); await saveAstro(a); toast('8 simulated pre-flight baseline samples recorded. Review and approve the baseline.'); render(); },
+  delastro: async () => { const a = A(); if (!confirm(`Permanently delete all records for ${a.code}? This cannot be undone (export a backup first).`)) return; await DB.del('astronauts', a.id); delete App.astros[a.id]; delete App.engines[a.id]; App.sel = ids()[0]; if (!App.sel) await seedPresets(); toast(`${esc(a.code)} deleted.`); render(); },
+  delrec: async el => { const a = A(); const k = el.dataset.k, id = el.dataset.id; if (!confirm(`Delete ${k} ${id}? The engine will re-evaluate the record history.`)) return; const arr = { 'Test': 'tests', 'Check-in': 'checkins', 'Review': 'reviews', 'Event': 'events' }[k]; a[arr] = a[arr].filter(r => r.id !== id); await saveAstro(a); toast('Record deleted.'); render(); },
+  expcsv: () => download(`BIOME_archive_${App.archiveOpts.scope === 'all' ? 'all' : A().code}.csv`, toCSV(buildArchive(App.archiveOpts)), 'text/csv'),
+  expjson: () => download(`BIOME_archive_${App.archiveOpts.scope === 'all' ? 'all' : A().code}.json`, JSON.stringify(buildArchive(App.archiveOpts), null, 2)),
+  expdict: () => download('BIOME_data_dictionary.json', JSON.stringify(Object.fromEntries(DICT), null, 2)),
+  backup: () => download(`BIOME_backup_${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify({ format: 'biome-backup', version: 1, exportedAt: new Date().toISOString(), meta: App.meta, cfg: App.cfg, astronauts: Object.values(App.astros) }, null, 1)),
+  restore: () => pickFile('.json,application/json', async txt => { try { const o = JSON.parse(txt); if (o.format !== 'biome-backup' || !Array.isArray(o.astronauts)) throw new Error('Not a BIOME backup file'); await DB.clear('astronauts'); App.astros = {}; for (const a of o.astronauts) { App.astros[a.id] = a; await DB.put('astronauts', a); } App.meta = o.meta || App.meta; App.cfg = { ...DEFAULT_CONFIG, ...(o.cfg || {}) }; App.engines = {}; App.sel = ids()[0]; await saveMeta(); toast(`Restored ${o.astronauts.length} astronaut record(s).`); render(); } catch (e) { toast('Restore failed: ' + esc(e.message)); } }),
+  reset: async () => { if (!confirm('Replace all local records with the six simulated demonstration presets?')) return; await seedPresets(); toast('Demonstration presets restored.'); render(); },
+  resetcfg: async () => { App.cfg = { ...DEFAULT_CONFIG }; App.engines = {}; await saveMeta(); toast('Configuration restored to defaults.'); render(); },
+  selftest: () => { App.selfTest = runSelfTest(App.cfg); render(); toast(`Self-test: ${App.selfTest.pass}/${App.selfTest.total} passing.`); },
+  runbench: async () => { App.bench = { running: true, p: 0 }; render(); const r = await runBenchmark(App.cfg, p => { App.bench.p = p; const el = document.getElementById('benchprog'); if (el) el.style.width = (p * 100) + '%'; }); App.bench = r; render(); toast('Benchmark complete.'); },
+};
+function pickFile(accept, cb) { const fp = document.getElementById('filepick'); fp.accept = accept; fp.value = ''; fp.onchange = () => { const f = fp.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => cb(String(r.result)); r.readAsText(f); }; fp.click(); }
+const FORMS = {
+  checkin: async f => {
+    const o = formObj(f), a = A(), d = App.meta.currentDay; const sym = {}; SYMPTOMS.forEach(([k]) => { sym[k] = +(o['sym_' + k] || 0); });
+    const rf = RED_FLAGS.filter(([k]) => o['rf_' + k]).map(([k]) => k); const before = eng().state;
+    const c = addCheckin(a, d, { symptoms: sym, redFlags: rf, ph: num(o.ph), cycle: o.cycle, meds: o.meds, notes: o.notes, noSymptoms: !Object.values(sym).some(Boolean) });
+    if (o.baselineEvent) addEvent(a, d, o.meds ? 'Health update: ' + o.meds : 'Major relevant change reported at check-in');
+    await saveAstro(a); const E = eng(); const rules = (c._rules || []);
+    toast(`Check-in saved. State: <b>${E.state}</b>${before !== E.state ? ` (was ${before})` : ''}${E.urgent ? ' — <b style="color:#ff8080">URGENT OVERLAY</b>' : ''}. ${rules.map(r => `[${r}]`).join(' ')}`); App.view = 'dashboard'; render();
+  },
+  test: async f => {
+    const o = formObj(f), a = A(); const day = num(o.day); if (day == null) return;
+    const m = { assay: o.assay, lot: o.lot, ntc: o.ntc, pc: o.pc, hscCq: num(o.hscCq), iac: o.iac, targets: {} };
+    TARGETS.forEach(t => { m.targets[t.key] = { status: o['st_' + t.key], cq: num(o['cq_' + t.key]), log10: num(o['lg_' + t.key]) }; });
+    const ck = [0, 1, 2, 3].map(i => !!o['ck' + i]);
+    const t = addTest(a, day, m, { source: App._simFilled ? 'simulated (editable)' : 'manual', notes: o.notes, checklist: ck }); App._simFilled = false;
+    await saveAstro(a); App.selResult = t.id; App.view = 'results'; render(); const r = eng().results[t.id]; toast(`Test analyzed: QC ${r.qc.valid ? 'pass' : 'FAILED'} · ${r.stateBefore} → <b>${r.stateAfter}</b> ${(r.rules || []).map(x => `[${x}]`).join(' ')}`);
+  },
+  decision: async f => {
+    const o = formObj(f), a = A(); const am = [0, 1, 2, 3].filter(i => o['am' + i]).length;
+    addReview(a, App.meta.currentDay, { type: 'clinical-decision', by: o.by, assessment: o.assessment, amsel: [0, 1, 2, 3].some(i => o['am' + i]) ? am : null, nugent: num(o.nugent), testing: o.testing, disposition: o.disposition, plan: o.plan, outcome: o.outcome, clearUrgent: !!o.clearUrgent });
+    await saveAstro(a); toast(`Decision recorded. State: <b>${eng().state}</b>.`); render();
+  },
+  newastro: async f => {
+    const o = formObj(f); const id = o.id.trim().toUpperCase(); if (App.astros[id]) { toast('That coded identifier already exists.'); return; }
+    const a = newAstro({ id, simulated: true, age: o.ageBand, regimen: o.regimen, cycleLen: num(o.cycleLen), history: o.history, abx: o.abx, pregnancy: o.pregnancy, missionStart: o.missionStart, diagnoses: o.diagnoses, title: 'Manually created astronaut' });
+    a.scenario = null; App.astros[id] = a; await saveAstro(a); App.sel = id; toast(`${esc(id)} created — state Baseline (R0). Record pre-flight samples (negative mission days) or simulate baseline collection in Medical review.`); render();
+  },
+  editastro: async f => {
+    const o = formObj(f), a = A(); const changes = [];
+    if ((o.regimen || '') !== (a.regimen || '')) changes.push(`Change in hormonal regimen (${a.regimen || '—'} → ${o.regimen || '—'})`);
+    if (o.pregnancy !== a.pregnancy) changes.push('Change in pregnancy status');
+    if ((o.abx || '') !== (a.abx || '')) changes.push('New antibiotic/antifungal course recorded');
+    Object.assign(a, { ageBand: o.ageBand, regimen: o.regimen, cycleLen: num(o.cycleLen), history: o.history, abx: o.abx, pregnancy: o.pregnancy, missionStart: o.missionStart || a.missionStart, diagnoses: o.diagnoses });
+    changes.forEach(c => addEvent(a, App.meta.currentDay, c)); await saveAstro(a); toast(changes.length ? `Profile saved. Baseline flagged for review (R10): ${esc(changes.join('; '))}` : 'Profile saved.'); render();
+  },
+};
+const CHANGE = {
+  astro: el => { App.sel = el.value; App.selResult = null; render(); },
+  trendTarget: el => { App.trendTarget = el.value; render(); },
+  arcScope: el => { App.archiveOpts.scope = el.value; render(); }, arcDates: el => { App.archiveOpts.dates = el.checked; render(); }, arcCycle: el => { App.archiveOpts.cycle = el.checked; render(); }, arcMeds: el => { App.archiveOpts.meds = el.checked; render(); },
+};
+
+/* ---------- boot ---------- */
+async function boot() {
+  document.addEventListener('click', e => { const el = e.target.closest('[data-act]'); if (!el) return; if (el.tagName === 'A') e.preventDefault(); const fn = ACT[el.dataset.act]; if (fn) fn(el, e); });
+  document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-act][tabindex], tr[data-act]')) { e.preventDefault(); e.target.click(); } });
+  document.addEventListener('submit', e => { const f = e.target.closest('form[data-form]'); if (!f) return; e.preventDefault(); FORMS[f.dataset.form] && FORMS[f.dataset.form](f); });
+  document.addEventListener('change', async e => { const el = e.target; if (el.dataset.change && CHANGE[el.dataset.change]) CHANGE[el.dataset.change](el); if (el.dataset.cfg) { const k = el.dataset.cfg; App.cfg[k] = k === 'iacPolicy' ? el.value : (num(el.value) ?? DEFAULT_CONFIG[k]); App.engines = {}; await saveMeta(); if (App.view === 'methods') { renderNav(); renderTop(); toast(`${esc(CONFIG_META[k][0])} set to ${esc(App.cfg[k])}; engine re-evaluated.`); } } });
+  const tip = document.getElementById('tip');
+  document.addEventListener('mouseover', e => { const t = e.target.closest('[data-tip]'); if (!t) { tip.style.display = 'none'; return; } tip.textContent = t.dataset.tip; tip.style.display = 'block'; });
+  document.addEventListener('mousemove', e => { if (tip.style.display === 'block') { tip.style.left = Math.min(window.innerWidth - 330, e.clientX + 14) + 'px'; tip.style.top = (e.clientY + 14) + 'px'; } });
+  App.persistent = await DB.open();
+  const [cfg, meta, astros] = await Promise.all([DB.get('meta', 'cfg'), DB.get('meta', 'meta'), DB.all('astronauts')]);
+  if (cfg) App.cfg = { ...DEFAULT_CONFIG, ...cfg }; if (meta) App.meta = { ...App.meta, ...meta };
+  if (astros && astros.length) { astros.forEach(a => { App.astros[a.id] = a; }); App.sel = ids()[0]; } else await seedPresets();
+  render();
+  setTimeout(() => { App.selfTest = runSelfTest(App.cfg); renderNav(); if (App.view === 'methods') render(); if (App.selfTest.pass !== App.selfTest.total) toast(`⚠ Self-test: ${App.selfTest.total - App.selfTest.pass} check(s) failing — see Methods.`); }, 60);
+}
+if (typeof document !== 'undefined' && typeof window !== 'undefined' && !window.__BIOME_NO_BOOT) boot();
+if (typeof module !== 'undefined') module.exports = { runSelfTest, generatePreset, runEngine, PRESETS, DEFAULT_CONFIG, runBenchmark, simulateMission, App, VIEWS, computeBaseline, qcTest };
+</script>
+</body>
+</html>

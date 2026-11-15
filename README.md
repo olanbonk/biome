@@ -6,13 +6,11 @@
 | --- | --- |
 | Competition | NASA Space Apps Challenge 2026 |
 | Challenge | *Create Health Monitoring Software for Astronauts on Space Missions* [6] |
-| Team | Team Pigeon (three members) — [EDIT: add member names, roles and location/university if desired] |
-| Live website | https://olanbonk.github.io/biome/ — [EDIT: verify the link works once GitHub Pages is deployed] |
+| Team | Team Pigeon (three members) — Chatchaya Chaimcharoen, Phawinee Auewattanamongkol, Olan Sinsuriya |
+| Live website | https://olanbonk.github.io/biome/ |
 | Software version | `0.9.0-hackathon` (the `VERSION` constant in `index.html`) |
 
 ![BIOME dashboard for simulated astronaut AST-C at Mission Day 75](docs/screenshots/01-dashboard.png)
-
-> [EDIT: The screenshots in `docs/screenshots/` were captured from the current `index.html`. Its header still shows the earlier working name "Adaptive Vaginal Health Monitor". If the header is changed to "BIOME (Baseline-Individualized Onboard Microbiome Evaluation)", retake the screenshots so they match.]
 
 ### Principal capabilities
 
@@ -69,8 +67,6 @@ Labels used throughout: **Implemented** (works in the website), **Simulated** (g
 Women have always been a minority of the people who have flown in space. More than 500 people have flown, and only about 11% of them were women [19]. NASA's first astronaut class to include women was selected in 1978 [19], almost two decades after the first astronaut selection. Many questions about the female body in spaceflight could not be studied with large or long-term datasets, because so few women had flown.
 
 That is changing in new selections. NASA's 2025 astronaut candidate class has six women and four men. It is the agency's first class with more women than men [20]. These two figures describe different populations: one counts everyone who has ever flown, the other a single modern selection class. They should not be compared directly as rates. Together they show that as more women fly, female-specific health questions affect a larger share of crews.
-
-> [EDIT: The project description mentions additional astronaut-selection statistics. Add them here only after checking their definitions and sources. Keep historical astronaut-candidate figures separate from modern Astronaut Corps class figures, and do not present them as directly comparable populations.]
 
 The scientific literature reflects this gap. A 2024 systematic review found 16 studies on human reproductive health in spaceflight or relevant analogues, and only five included female participants [1]. A 2025 commentary on female astronaut health also identified open questions about reproductive and gynecological health during long-duration missions [2].
 
@@ -954,12 +950,10 @@ flowchart LR
 ```text
 biome/
 ├── index.html              # the complete application
-├── README.md               # this file
+├── README.md               # this file, a comprehensive app description
 └── docs/
     └── screenshots/        # interface screenshots used in this README
 ```
-
-[EDIT: confirm the final repository structure and add any further files, such as a LICENSE or the specification, before publishing.]
 
 ---
 
@@ -1118,27 +1112,10 @@ Data persistence, graph updates, exports, offline operation and keyboard operati
 | 3 | **Simple CSV parsing.** Fields are split on commas without quote handling. | Notes or values containing commas break a row. | Use an RFC 4180-compliant parser. |
 | 4 | **Time in each state is not displayed in the benchmark table.** It is computed by the simulator. | The specification's "time spent in each monitoring state" metric is not visible. | Add the column or a chart. |
 | 5 | **No service worker.** | Offline reload of the hosted version depends on the browser cache. | Add a service worker and web app manifest. |
-| 6 | **Header naming.** The interface still shows the earlier working name "Adaptive Vaginal Health Monitor". | Inconsistent with the BIOME naming convention. | [EDIT: update the header to "BIOME (Baseline-Individualized Onboard Microbiome Evaluation)", or remove this row once done.] |
 
 ---
 
 ## 13. Roadmap and future development
-
-**Completed in the current version.** The 16 changes from the most recent review are implemented in the current `index.html` and covered where relevant by the 39 self-tests:
-- baseline rejection with a required reason;
-- additional NASA research-context items;
-- the Hilbert qPCR reference table and warnings;
-- test date, cartridge ID, calibration-lot ID and run-specific standard curves;
-- an unticked collection checklist;
-- stored baseline-sample context;
-- a displayed "Candida increase alone" pattern;
-- careful urinary-symptom handling for referral only;
-- a register of previously hard-coded values (now configurable);
-- additional self-tests;
-- accessible tables;
-- a labelled demo role switch.
-
-The 17th item, the backward-navigation correction, is still open.
 
 **Software (Future development)**
 - Make the decision engine respect the selected historical day (known issue 1).
@@ -1162,18 +1139,17 @@ No completion dates are given. Not every proposed item will necessarily be imple
 
 ## 14. Installation and usage
 
-**Option 1 — Live website.** Open https://olanbonk.github.io/biome/ in a current desktop browser. [EDIT: verify the link once deployed.]
+**Option 1 — Live website.** Open https://olanbonk.github.io/biome/ in a current desktop browser. 
 
 **Option 2 — Local copy.**
 1. Clone or download the repository:
    ```bash
    git clone https://github.com/olanbonk/biome.git
    ```
-   [EDIT: confirm the repository URL.]
 2. Open `index.html` directly in a browser by double-clicking it. **No build step, server or installation is needed**, and BIOME works without an internet connection.
 3. Optionally, serve the folder with any static server, e.g. `python3 -m http.server`, and open `http://localhost:8000`.
 
-**Browsers.** BIOME was developed and tested in Google Chrome on desktop. It uses standard web features (IndexedDB, SVG, ES2020 JavaScript) supported by current versions of Chrome, Edge, Firefox and Safari. [EDIT: list any other browsers the team has tested.] When opened as a local file, a few browsers or privacy modes block IndexedDB. BIOME then keeps data in memory only and shows a warning. Use a local server or another browser if you need persistence.
+**Browsers.** BIOME was developed and tested in Google Chrome on desktop. It uses standard web features (IndexedDB, SVG, ES2020 JavaScript) supported by the current version of Chrome. When opened as a local file, a few browsers or privacy modes might block IndexedDB. BIOME then keeps data in memory only and shows a warning. Use a local server or another browser if you need persistence.
 
 **Your data.** Records are stored only in the browser you use, separately for each site address (the live site and a local file keep separate data). To start over, use **Research → Research archive → Backup & records → Reset to demonstration presets…**. To move data between browsers, use **⇩ Backup all data** and **⇧ Restore…**.
 
@@ -1183,9 +1159,7 @@ No completion dates are given. Not every proposed item will necessarily be imple
 
 ## 15. Team Pigeon and project goals
 
-[EDIT: Replace or confirm this section with the team's own statement. It is drafted from the README outline because the team statement was not supplied.]
-
-Team Pigeon is a three-person team. [EDIT: names, roles, institution.] We built BIOME because women's health in space is a shared concern, not a niche one. As crews include more women, missions become longer and help on Earth gets further away. Health questions that were rarely studied become everyday operational questions for whole crews.
+As a team of three, we hope BIOME shows that women’s health in space is a shared concern, not a niche one. Our goal is to give future crews a personalized way to catch health changes early, so that a woman heading to the Moon or Mars can be confident her care was designed around her. We hope our project helps close the gap in female-specific spaceflight data and encourages more people, of every background, to help close it. Not only that, we hope to show that a small team can turn our research into a practical idea that makes long-duration exploration safer, more inclusive, and better supported by evidence. We know BIOME is a proposal that needs validation, and we hope it starts a conversation that leads to real research and, one day, healthier journeys for everyone who goes.
 
 Our goals are:
 
@@ -1201,7 +1175,7 @@ BIOME is a **proposal and a software prototype**. Its physical testing system, m
 
 ### AI-use disclosure
 
-[EDIT: The team must confirm exactly which AI tools were used and for what. Do not publish this section without that confirmation. A starting point, if accurate: *"We used Claude (Anthropic), an AI assistant, to help write and debug `index.html`, to draft this README and to check implementation details against our technical specification. The team defined the project concept, specification and requirements, reviewed the generated code and text, and is responsible for the final content."* Add any other tools used for research, writing, images or design.]
+All ideation was done by our team without the use of AI, only using Artificial Intelligence (including ChatGPT and Claude) to help list out pros and cons for our idea candidates to help narrow down which to use. Most research, including sources regarding the effects of microgravity on the reproductive system and especially on the vaginal microbiome was found by us directly. AI, Claude in particular, was used to help find thresholds for acceptable values for individual bactermium or fungi in the vaginal microbiome to help make decisions in the code. For example, if Lactobacillus crispatus values are high, at  what point should the high value illicit intervention from the Crew Medical Officer. Claude was primarily used in the writing and debugging of both `index.html` and `README.md` under our close supervision. We would write outlines for how the code should read/be run, then have Claude draft the document itself. Afterwards, we would still have to review all generated code and text to ensure correctness and alignment with our ideas.
 
 ### Acknowledgements
 
@@ -1209,8 +1183,6 @@ BIOME is a **proposal and a software prototype**. Its physical testing system, m
 - NASA Human Research Program, Human Research Roadmap and OSDR resources [3, 7, 8, 16–18].
 - The authors of the scientific and clinical literature cited below.
 - No external software libraries are used in `index.html`.
-
-[EDIT: add any mentors, advisors or institutions the team wishes to thank.]
 
 ### References
 

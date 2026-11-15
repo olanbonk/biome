@@ -1,4 +1,4 @@
-# BIOME — Baseline-Individualized Onboard Microbiome Evaluation
+# BIOME: Baseline-Individualized Onboard Microbiome Evaluation
 
 **BIOME is an offline-capable, personalized health-monitoring application designed to track vaginal microbiome changes in female astronauts during long-duration spaceflight.** It combines individual health baselines, routine health assessments, quantitative molecular measurements and longitudinal analysis to identify potentially concerning changes and support onboard medical decision-making.
 
@@ -6,7 +6,7 @@
 | --- | --- |
 | Competition | NASA Space Apps Challenge 2026 |
 | Challenge | *Create Health Monitoring Software for Astronauts on Space Missions* [6] |
-| Team | Team Pigeon (three members) — Chatchaya Chaimcharoen, Phawinee Auewattanamongkol, Olan Sinsuriya |
+| Team | Team Pigeon (three members): Chatchaya Chaimcharoen, Phawinee Auewattanamongkol, Olan Sinsuriya |
 | Live website | https://olanbonk.github.io/biome/ |
 | Software version | `0.9.0-hackathon` (the `VERSION` constant in `index.html`) |
 
@@ -188,7 +188,7 @@ Health, Results, Medical Review, Research and Methods each have **sub-tabs** und
 | ● **Routine** | Baseline, Stable |
 | ▲ **Additional monitoring** | Watch, Monitor |
 | ✚ **Medical attention** | Clinical Review |
-| ⚠ **Urgent** | Urgent overlay — a separate flag that overrides everything else |
+| ⚠ **Urgent** | Urgent overlay: a separate flag that overrides everything else |
 
 The internal state appears under *Detailed state* on the Dashboard, in each result's *Advanced analysis* and in the reviewer views. Status is never shown by color alone: every badge also has a symbol and text.
 
@@ -204,7 +204,7 @@ When you open BIOME for the first time in a browser:
 | Astronaut | Demonstration scenario | Status at Day 75 (internal state) |
 | --- | --- | --- |
 | AST-A | Stable microbiome, with one invalid test (day 56) | Routine (Stable) |
-| AST-B | Temporary *L. crispatus* increase that resolves | Routine (Stable) — briefly Watch on days 42–44 |
+| AST-B | Temporary *L. crispatus* increase that resolves | Routine (Stable): briefly Watch on days 42–44 |
 | AST-C | Persistent BV-associated microbial changes followed by symptoms | Medical attention (Clinical Review) since day 66 |
 | AST-D | Symptoms despite stable microbial measurements | Medical attention (Clinical Review) since day 32 |
 | AST-E | *Candida* increase without symptoms | Routine (Stable); latest pattern "Candida increase alone" |
@@ -247,7 +247,7 @@ These are prompts for assessment, not diagnoses. Symptoms are never added into a
    - Other red flag defined by the mission medical protocol.
 2. Click **Report urgent symptom now**.
 3. The **urgent banner** appears at once, telling the crew to seek immediate medical assistance under the mission protocol. BIOME does not wait for a molecular test (rule R8).
-4. The flag is **not** cleared by a later test or check-in. Only a medical reviewer can clear it, by recording a decision with *Urgent situation assessed — clear the Urgent alert* ticked (Section 4.8).
+4. The flag is **not** cleared by a later test or check-in. Only a medical reviewer can clear it, by recording a decision with *Urgent situation assessed: clear the Urgent alert* ticked (Section 4.8).
 
 The red-flag list is a prototype. An operational list would need approval by a qualified medical authority.
 
@@ -257,7 +257,7 @@ Open **Health → Enter test results**. Entry happens in three steps. Manual, CS
 
 ![Step 2 of test entry with simulated instrument values loaded](docs/screenshots/03-test-entry-measurements.png)
 
-#### Step 1 — Test information
+#### Step 1: Test information
 
 | Field | Notes |
 | --- | --- |
@@ -272,7 +272,7 @@ Open **Health → Enter test results**. Entry happens in three steps. Manual, CS
 
 **Cartridge accounting.** Every in-flight test (mission day 0 or later) uses one cartridge, **even if it fails quality control**. Pre-flight baseline samples do not count against the flight inventory. Click **Next: enter measurements →**.
 
-#### Step 2 — Measurements
+#### Step 2: Measurements
 
 Choose an input method at the top of the step.
 
@@ -309,7 +309,7 @@ Choose an input method at the top of the step.
 
 Click **Next: review →**.
 
-#### Step 3 — Review and save
+#### Step 3: Review and save
 
 ![Step 3: quality-control preview before saving](docs/screenshots/04-test-entry-review.png)
 
@@ -334,7 +334,7 @@ Open **Results → Latest result**. Use **Show another test** (top right) to ope
 The main result card shows:
 
 1. **Overall status:** the plain-language badge, or *✕ Invalid test*.
-2. **Headline and summary in plain language**, e.g. *"Provisional BV-like microbial pattern — not a diagnosis"* followed by which targets are outside the individual's expected range.
+2. **Headline and summary in plain language**, e.g. *"Provisional BV-like microbial pattern: not a diagnosis"* followed by which targets are outside the individual's expected range.
 3. A **symptoms notice** if symptoms were reported around the test. It reminds the reader that urinary or other causes cannot be excluded by this panel.
 4. **Key findings** for five microbial domains:
    - Protective *Lactobacillus*.
@@ -392,7 +392,7 @@ Open **Results → Trends**. Graphs show how an astronaut's measurements change 
 - You must **enter or simulate the test yourself** under Health → Enter test results.
 - The earliest mission day you can select is **−60**.
 
-> **Known issue — backward navigation.** The ◀ arrow changes the displayed day, but the decision engine still processes records from later days. The displayed status can therefore reflect events after the selected day. For example, with the presets, stepping AST-C back to day 60 still shows *Clinical Review* (reached on day 66), while her actual state on day 60 was *Monitor*. Do not use ◀ as a historical replay feature until this is fixed (Sections 12.2 and 13).
+> **Known issue: backward navigation.** The ◀ arrow changes the displayed day, but the decision engine still processes records from later days. The displayed status can therefore reflect events after the selected day. For example, with the presets, stepping AST-C back to day 60 still shows *Clinical Review* (reached on day 66), while her actual state on day 60 was *Monitor*. Do not use ◀ as a historical replay feature until this is fixed (Sections 12.2 and 13).
 
 ### 4.8 Medical reviewer interface
 
@@ -429,7 +429,7 @@ Switch **View as** to **Medical reviewer**. This is a demonstration switch, not 
 5. Write the **Clinician-entered management plan**. BIOME never generates treatment.
 6. Optionally expand **Clinical diagnostic criteria** and record the four **Amsel criteria** (≥ 3 of 4 = Amsel diagnosis) and a **Nugent score** (0–3 *Lactobacillus*-predominant, 4–6 intermediate, 7–10 consistent with BV). These are clinician-entered results. **BIOME never calculates Amsel or Nugent from qPCR.**
 7. Record **Follow-up monitoring & outcome**.
-8. If an urgent flag is active, tick *Urgent situation assessed — clear the Urgent alert*.
+8. If an urgent flag is active, tick *Urgent situation assessed: clear the Urgent alert*.
 9. Click **Record decision (Mission Day N)**. The decision appears in **Decision history**, and the engine applies the disposition from that day.
 
 **Medical Review → Baseline management**
@@ -441,7 +441,7 @@ Switch **View as** to **Medical reviewer**. This is a demonstration switch, not 
   - **Provisional:** enough data to calculate limits, awaiting approval.
   - **Approved:** frozen reference profile.
 - An uncertainty notice: 6–8 observations give wide limits, and the 6-observation minimum is a prototype assumption.
-- A per-target summary: n valid, mean log10, SD, range, detection percentage and status. Status is *Usable*, *Usable · small sample*, *high variability* or *Insufficient — qualitative only*. When a baseline is active, the approved mean/SD/n are shown alongside.
+- A per-target summary: n valid, mean log10, SD, range, detection percentage and status. Status is *Usable*, *Usable · small sample*, *high variability* or *Insufficient: qualitative only*. When a baseline is active, the approved mean/SD/n are shown alongside.
 - **Approve baseline** (or **Approve replacement baseline**). BIOME asks for the reviewer's code, and approval needs at least one usable target. The approved snapshot is **frozen**: flight measurements never change it.
 - **Reject baseline**, with a **required reason**. The astronaut stays in Baseline, a *"Collect more baseline data"* task is created and an audit-log entry is written.
 - **Keep existing baseline.** This appears when the baseline has been flagged by a baseline-changing event (R10) and records the decision to keep it.
@@ -680,7 +680,7 @@ The pattern engine looks at which **direction** targets move and **which domains
 | Pattern | Rule in the prototype | Initial response |
 | --- | --- | --- |
 | Stable pattern | No signals | Routine surveillance |
-| **Provisional BV-like microbial pattern — not a diagnosis** | **≥ 2 BV-associated targets above their upper limits *and* ≥ 1 of *L. crispatus*, *L. jensenii* or *L. gasseri* below its lower limit** (after Holm correction) | Confirm and increase monitoring |
+| **Provisional BV-like microbial pattern: not a diagnosis** | **≥ 2 BV-associated targets above their upper limits *and* ≥ 1 of *L. crispatus*, *L. jensenii* or *L. gasseri* below its lower limit** (after Holm correction) | Confirm and increase monitoring |
 | BV-associated increase | ≥ 1 BV-associated target up, BV-like rule not met | Repeat test and assess context |
 | *Lactobacillus* enrichment (neutral) | Only increases, in protective *Lactobacillus* and/or *L. iners* (16S may also rise), with no BV-associated increase and no protective decrease | Neutral pattern; monitor |
 | Total-load shift | Only total 16S changes | Repeat or monitor |
@@ -757,21 +757,21 @@ Every preset starts from eight weekly pre-flight samples (calibration lot `CAL-2
 | E | *Candida* detection without symptoms |
 | F | *Lactobacillus* enrichment without BV-associated increases |
 
-**A — Stable microbiome and invalid-test handling.** Natural cycle (~28 days).
+**A: Stable microbiome and invalid-test handling.** Natural cycle (~28 days).
 - **What happens:** no microbial change and no symptoms. On day 56 the human sample control fails.
 - **How BIOME responds:**
   - Tests run weekly to day 28, then every 14 days.
   - The day-56 test is saved as **invalid** (R9). The state stays Stable, one cartridge is counted and a repeat is collected on day 57.
 - **Demonstrates:** routine surveillance, and that QC failures neither change the state nor go unaccounted.
 
-**B — Temporary *L. crispatus* increase and recovery.** Levonorgestrel IUD.
+**B: Temporary *L. crispatus* increase and recovery.** Levonorgestrel IUD.
 - **What happens:** *L. crispatus* is 1.5 log10 higher on days 40–43 only.
 - **How BIOME responds:**
   - The day-42 routine test shows a Holm-significant increase: **Stable → Watch** (R1), repeat in 2 days.
   - On day 44 the value is back within limits: **Watch → Stable** (R2), signal recorded as unconfirmed/transient.
 - **Demonstrates:** confirmation testing that avoids escalating a one-off change.
 
-**C — Persistent BV-associated changes followed by symptoms.** Continuous combined oral contraceptive.
+**C: Persistent BV-associated changes followed by symptoms.** Continuous combined oral contraceptive.
 - **What happens:** from day 50, over 8 days:
   - *G. vaginalis*, *F. vaginae*, *Megasphaera* and BVAB2 rise.
   - *L. crispatus* and *L. jensenii* fall.
@@ -785,7 +785,7 @@ Every preset starts from eight weekly pre-flight samples (calibration lot `CAL-2
   - BVAB2 was not detected at baseline, so it appears as a qualitative "newly detected" transition. pH above 4.5 is logged as context only.
 - **Demonstrates:** multi-marker pattern detection, confirmation, increased monitoring and symptom-triggered referral, without ever calling it BV.
 
-**D — Symptoms despite stable microbial measurements.** Natural cycle (~30 days).
+**D: Symptoms despite stable microbial measurements.** Natural cycle (~30 days).
 - **What happens:** the microbiome stays stable. Mild itching starts on day 30, mild burning on day 31, and itching becomes moderate on day 33. On day 21 the internal amplification control shows inhibition.
 - **How BIOME responds:**
   - Day 21: **invalid** (R9), repeat on day 22.
@@ -793,12 +793,12 @@ Every preset starts from eight weekly pre-flight samples (calibration lot `CAL-2
   - Day 32: the third consecutive symptomatic day meets the triage placeholder, so **Clinical Review** (R6).
 - **Demonstrates:** symptoms are never dismissed because molecular results are stable.
 
-**E — *Candida* detection without symptoms.** Etonogestrel implant.
+**E: *Candida* detection without symptoms.** Etonogestrel implant.
 - **What happens:** *Candida* is quantifiable at baseline and rises by 2.4 log10 over days 35–40. No symptoms occur.
 - **How BIOME responds:** from the day-42 test the pattern is **"Candida increase alone"**. Each such test is recorded and explained (R7), and one contextual review task is created. The astronaut stays **Stable** and never enters Watch or Clinical Review.
 - **Demonstrates:** asymptomatic *Candida* is not automatically escalated [12].
 
-**F — *Lactobacillus* enrichment without BV-associated increases.** Continuous combined oral contraceptive.
+**F: *Lactobacillus* enrichment without BV-associated increases.** Continuous combined oral contraceptive.
 - **What happens:** *L. crispatus*, *L. jensenii* and *L. gasseri* rise from day 36. The direction follows the parabolic-flight observation [4]; the magnitude is assumed.
 - **How BIOME responds:**
   - Day 42: **Watch** (R1).
@@ -930,7 +930,7 @@ flowchart LR
 ### 8.3 Storage and offline behaviour
 
 - All records are stored **locally in the browser** with IndexedDB and persist across reloads. Nothing is sent to a server.
-- If IndexedDB is blocked or unavailable (for example in some private-browsing modes), BIOME **falls back to in-memory data** and the left navigation shows *"IndexedDB unavailable — data held in memory only."* Data is then lost when the page closes.
+- If IndexedDB is blocked or unavailable (for example in some private-browsing modes), BIOME **falls back to in-memory data** and the left navigation shows *"IndexedDB unavailable: data held in memory only."* Data is then lost when the page closes.
 - Once loaded, BIOME makes **no network requests**. A downloaded copy of `index.html` runs entirely offline. The hosted GitHub Pages version needs a connection for the first load, and the app has no service worker, so reloading it offline depends on the browser's cache.
 
 ### 8.4 Import and export
@@ -1139,9 +1139,9 @@ No completion dates are given. Not every proposed item will necessarily be imple
 
 ## 14. Installation and usage
 
-**Option 1 — Live website.** Open https://olanbonk.github.io/biome/ in a current desktop browser. 
+**Option 1: Live website.** Open https://olanbonk.github.io/biome/ in a current desktop browser. 
 
-**Option 2 — Local copy.**
+**Option 2: Local copy.**
 1. Clone or download the repository:
    ```bash
    git clone https://github.com/olanbonk/biome.git

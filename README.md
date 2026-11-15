@@ -74,7 +74,7 @@ The scientific literature reflects this gap. A 2024 systematic review found 16 s
 
 NASA's Human Research Program treats **host–microorganism interactions** as a spaceflight health risk. NASA notes that microorganisms and microbial communities can change during spaceflight. The health implications remain incompletely understood, as do the relative contributions of microbial change, microbial virulence and immune-system change [3]. Genitourinary conditions are also part of NASA's medical-risk picture. A probabilistic risk assessment of sex-dependent medical outcomes during spaceflight modeled urinary tract infection among its conditions [15].
 
-How spaceflight affects the female reproductive microbiome is still largely unknown. The most direct evidence so far is a 2026 parabolic-flight study of four reproductive-age women [4]. It found substantially more taxonomic changes in vaginal samples than in oral samples after flight. These included increases in *Lactobacillus crispatus* and *L. jensenii*. The study had important limits:
+How spaceflight affects the female reproductive microbiome is still largely understudied. The most direct evidence so far is a 2026 parabolic-flight study of four reproductive-age women [4]. It found substantially more taxonomic changes in vaginal samples than in oral samples after flight. These included increases in *Lactobacillus crispatus* and *L. jensenii*. The study had important limits:
 
 - Only **four** participants took part.
 - It studied **parabolic flight** (seconds of altered gravity at a time), not long-duration orbital missions.

@@ -6,7 +6,7 @@
 | --- | --- |
 | Competition | NASA Space Apps Challenge 2026 |
 | Challenge | *Create Health Monitoring Software for Astronauts on Space Missions* [6] |
-| Team | Team Pigeon (three members): Chatchaya Chaimcharoen, Phawinee Auewattanamongkol, Olan Sinsuriya |
+| Team | Team Pigeon (three members): Chatchaya Chaimchareon, Phawinee Auewattanamongkol, Olan Sinsuriya |
 | Live website | https://olanbonk.github.io/biome/ |
 | Software version | `0.9.0-hackathon` (the `VERSION` constant in `index.html`) |
 
